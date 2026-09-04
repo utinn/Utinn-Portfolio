@@ -1,0 +1,49 @@
+/*
+ * Global design tokens confirmed in CLAUDE.md (Sections 5 & 6).
+ * These are the ONLY values currently confirmed as global references.
+ * Do not add page- or component-specific values here — inspect Figma
+ * per-section instead and override locally when a component's actual
+ * measurements differ from these fallback tokens.
+ */
+
+@theme {
+  /* Verified Global Design Direction (CLAUDE.md Section 5) */
+  --color-background: #080b12;
+  --color-accent: #60a5fa;
+  --color-foreground: #ffffff;
+
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+
+  /* Typography scale (CLAUDE.md Section 6) — fallback tokens only.
+     Always prefer the actual Figma component's values when implementing
+     a specific section; H3 has no confirmed global value ("follow Figma"). */
+  --text-display: 4rem; /* 64px */
+  --text-display--line-height: 1.1;
+  --text-display--font-weight: 700;
+
+  --text-h1: 3rem; /* 48px */
+  --text-h1--line-height: 1.15;
+  --text-h1--font-weight: 700;
+
+  --text-h2: 2.25rem; /* 36px */
+  --text-h2--line-height: 1.2;
+  --text-h2--font-weight: 700;
+
+  --text-body-lg: 1.125rem; /* 18px */
+  --text-body-lg--line-height: 1.5;
+  --text-body-lg--font-weight: 400;
+
+  --text-body: 1rem; /* 16px */
+  --text-body--line-height: 1.5;
+  --text-body--font-weight: 400;
+
+  --text-caption: 0.875rem; /* 14px */
+  --text-caption--line-height: 1.4;
+  --text-caption--font-weight: 500;
+}
+
+/* Primary desktop design reference width (CLAUDE.md Section 5). Plain
+   custom property (not a Tailwind theme namespace) consumed by PageContainer. */
+:root {
+  --desktop-width: 1440px;
+}
