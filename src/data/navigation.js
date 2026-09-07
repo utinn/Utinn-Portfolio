@@ -14,4 +14,4 @@ export const primaryNavItems = [
 ]
 
 /** Routes considered "Projects" for Navbar active-state purposes (Section 5.4, 14.1, 15.1). */
-export const projectsChildPaths = ['/projects/games', '/projects/ai']
+export const projectsChildPaths = ['/projects/game', '/projects/ai']

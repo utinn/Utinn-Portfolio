@@ -12,6 +12,14 @@
   --color-accent: #60a5fa;
   --color-foreground: #ffffff;
 
+  /* Provisional — not yet confirmed via Figma MCP. Visually approximated
+     from docs/figma-reference/home/*.png; verify exact values later. */
+  --color-muted: #a3adc2;
+  --color-panel: #0d1220;
+  --color-border: rgba(148, 163, 195, 0.28);
+  --color-status-completed: #34d399;
+  --color-status-wip: #f87171;
+
   --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
 
   /* Typography scale (CLAUDE.md Section 6) — fallback tokens only.
@@ -40,10 +48,25 @@
   --text-caption: 0.875rem; /* 14px */
   --text-caption--line-height: 1.4;
   --text-caption--font-weight: 500;
+
+  /* Provisional shared radii — visually approximated from the Figma
+     reference PNGs, verify exact values via Figma MCP later. Declared under
+     @theme so Tailwind also generates rounded-card / rounded-pill utilities. */
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
 }
 
 /* Primary desktop design reference width (CLAUDE.md Section 5). Plain
    custom property (not a Tailwind theme namespace) consumed by PageContainer. */
 :root {
   --desktop-width: 1440px;
+
+  /* Category pages' return curtain. Visible width and hit area are separate:
+     the edge must read as a slim atmospheric band, but the link around it
+     still has to be a comfortable target on touch. Single source of truth for
+     both — the curtain, its gradient body, and the page content's padding all
+     read these (src/styles/curtains.css,
+     components/sections/ProjectCategoryStage.jsx). */
+  --return-curtain-w: clamp(16px, 1.8vw, 30px);
+  --return-curtain-hit: clamp(56px, 6vw, 96px);
 }

@@ -1,0 +1,596 @@
+/*
+ * Home page motion primitives (ANIMATION_SPEC.md). Durations/easings below
+ * are taken from the spec's recommended ranges where given; anything not
+ * explicitly numbered in the spec is a provisional value tuned to "feel
+ * right" against the Figma reference and should be revisited during visual
+ * QA (CLAUDE.md Section 3).
+ *
+ * Reduced motion: globals.css already forces near-zero duration and a
+ * single iteration on every animation/transition site-wide, which
+ * structurally satisfies ANIMATION_SPEC.md Section 5 for everything below
+ * (continuous loops collapse to a static end-frame instead of animating).
+ */
+
+/* ---------- 14. Section scroll reveal ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateX(var(--reveal-offset, -56px));
+  transition:
+    opacity 600ms ease-out,
+    transform 600ms ease-out;
+}
+.reveal-right {
+  --reveal-offset: 56px;
+}
+.reveal.reveal-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ---------- 14a. Shared Home section header reveal (owner correction pass) ----------
+   Supersedes the generic whole-section side-reveal for every Home section
+   below the Hero. One stacked language everywhere: the title rises, the
+   caption rises shortly after it, and the section's own content animation
+   starts afterwards (delayed by SECTION_CONTENT_DELAY_MS in SectionHeader.jsx).
+   Both stages share the section's single useScrollReveal() flag, so they
+   trigger together and play once per visit. */
+.section-header-title {
+  opacity: 0;
+  transform: translateY(40px);
+  transition:
+    opacity 500ms ease-out,
+    transform 500ms ease-out;
+}
+.section-header-caption {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 450ms ease-out,
+    transform 450ms ease-out;
+  transition-delay: 180ms;
+}
+.section-header-revealed .section-header-title,
+.section-header-revealed .section-header-caption {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- 14b. Featured Works converging card entrance ----------
+   The two project cards converge inward from opposite sides once the header
+   cascade has played (delay supplied per-card as --reveal-delay). */
+.fw-card-reveal {
+  opacity: 0;
+  transition:
+    opacity 650ms ease-out,
+    transform 650ms ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.fw-card-reveal-left {
+  transform: translateX(-64px);
+}
+.fw-card-reveal-right {
+  transform: translateX(64px);
+}
+.fw-card-reveal-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ---------- 10. Hero staged entrance ---------- */
+@keyframes hero-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes hero-profile-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.hero-fade-up {
+  animation: hero-fade-up 600ms ease-out both;
+}
+.hero-profile-in {
+  animation: hero-profile-in 700ms ease-out both;
+}
+.hero-delay-0 {
+  animation-delay: 0ms;
+}
+.hero-delay-1 {
+  animation-delay: 110ms;
+}
+.hero-delay-2 {
+  animation-delay: 220ms;
+}
+.hero-delay-3 {
+  animation-delay: 340ms;
+}
+.hero-delay-4 {
+  animation-delay: 420ms;
+}
+
+/* ---------- 10.7 Hero profile ambient glow (subtle breathing) ---------- */
+@keyframes hero-glow-breathe {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+.hero-profile-glow {
+  animation: hero-glow-breathe 4.5s ease-in-out infinite;
+}
+
+/* ---------- 10.8 Hero profile particles ---------- */
+@keyframes hero-particle-drift {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.8);
+  }
+  15% {
+    opacity: var(--particle-opacity, 0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--particle-x, 40px), var(--particle-y, -40px)) scale(1);
+  }
+}
+.hero-particle {
+  position: absolute;
+  border-radius: 999px;
+  background: var(--particle-color, #ffffff);
+  /* Each dot carries its own soft glow (unlike the flat global background
+     particles) so the profile-emitted field reads as visibly more luminous. */
+  box-shadow:
+    0 0 6px 1.5px var(--particle-color, #ffffff),
+    0 0 2px 0.5px var(--particle-color, #ffffff);
+  animation: hero-particle-drift var(--particle-duration, 6s) ease-out infinite;
+  animation-delay: var(--particle-delay, 0s);
+  will-change: transform, opacity;
+}
+
+/* ---------- 11. Global background particle drift ---------- */
+@keyframes bg-particles-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-260px, -260px, 0);
+  }
+}
+.bg-particles-layer {
+  position: absolute;
+  inset: -20% -20%;
+  animation: bg-particles-drift 70s linear infinite;
+  will-change: transform;
+}
+
+/* ---------- 12. Tag / label hover ---------- */
+.tag-chip {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 250ms ease-out,
+    box-shadow 250ms ease-out;
+}
+.tag-chip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.55) 48%, transparent 66%);
+  transform: translateX(-120%);
+  opacity: 0;
+  pointer-events: none;
+}
+.tag-chip:hover,
+.tag-chip:focus-visible {
+  transform: scale(1.04);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 0 16px rgba(255, 255, 255, 0.25);
+}
+.tag-chip:hover::before,
+.tag-chip:focus-visible::before {
+  opacity: 1;
+  animation: tag-shine 700ms ease-out 1;
+}
+@keyframes tag-shine {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+
+/* ---------- 13. Directional (arrow) button hover ----------
+   Originally scoped to external links only; the shared Button component
+   now applies this to every arrow-bearing button (internal or external),
+   per correction-pass direction — it's the site's one directional-button
+   interaction, not an external-only affordance. Class name kept as-is to
+   avoid an unrelated rename across every call site. */
+.btn-external {
+  transition: transform 250ms ease-out;
+}
+.btn-external:hover,
+.btn-external:focus-visible {
+  transform: scale(1.04);
+}
+.btn-external__arrow {
+  display: inline-block;
+  transition: transform 250ms ease-out;
+}
+.btn-external:hover .btn-external__arrow,
+.btn-external:focus-visible .btn-external__arrow {
+  animation: arrow-nudge 900ms ease-in-out infinite;
+}
+@keyframes arrow-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+}
+
+/* ---------- 16.1 Featured project status radar pulse ---------- */
+.status-dot {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--status-color, currentColor);
+}
+.status-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--status-color, currentColor);
+  animation: radar-pulse 1.5s ease-out infinite;
+}
+@keyframes radar-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+/* ---------- 16.2 Featured project Key Features bullet glow (owner correction pass) ---------- */
+.feature-bullet-glow {
+  background: #60a5fa;
+  box-shadow: 0 0 20px 2px #60a5fa;
+}
+
+/* ---------- 17. Featured project screenshot outline shine ---------- */
+@property --outline-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+.outline-shine {
+  position: relative;
+  border-radius: var(--radius-card);
+}
+.outline-shine::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--outline-angle),
+    transparent 0deg,
+    transparent 260deg,
+    rgba(255, 255, 255, 0.95) 300deg,
+    rgba(96, 165, 250, 0.9) 320deg,
+    transparent 350deg
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: outline-rotate 12s linear infinite;
+  pointer-events: none;
+}
+@keyframes outline-rotate {
+  to {
+    --outline-angle: 360deg;
+  }
+}
+
+/* ---------- 19.3 Home Experience timeline rail draw ---------- */
+.timeline-rail {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 3.0s ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.timeline-rail.timeline-rail-visible {
+  transform: scaleX(1);
+}
+
+/* ---------- 19.9 Timeline rail glow (owner correction pass) ----------
+   A long, full-width shape reads as much more prominent than a small one at
+   the same opacity — prominence scales with area, not just per-pixel alpha.
+   The rail's own fill must therefore be noticeably translucent (not the
+   fully-opaque bg-accent it used to be), and its halo kept small/faint,
+   or a "long line" glow always overpowers a small "dot" glow regardless of
+   the node's own numbers. See HomeExperience.jsx for the bg-accent/55 fill.
+
+   Intensity pass: opacity on the two original layers raised ~3x (the main
+   intensity driver, per the owner's direction — blur radii only nudged up
+   slightly to keep the falloff smooth), plus one new, very low-opacity wide
+   layer for soft ambient bloom. Still clearly under the node's glow
+   (.timeline-node tops out at 0.85 opacity on an 8px blur) on every layer,
+   so the rail stays visibly subtler despite the increase. */
+.timeline-rail-glow {
+  box-shadow:
+    0 0 28px 0 rgba(96, 165, 250, 0.15),
+    0 0 16px 0 rgba(96, 165, 250, 0.36),
+    0 0 6px 0 rgba(96, 165, 250, 0.6);
+}
+
+/* ---------- 19.10 Timeline node glow (owner correction pass) ----------
+   Single solid circle — the earlier two-layer "bullseye" (a translucent
+   ::before disc + a small bright ::after disc inside a separate ring) read
+   as two distinct nested circles / a hollow target, which was the wrong
+   visual intent. One element carries the fill and the glow together: no
+   pseudo-elements, no nested shapes, no border — a white stroke was tried
+   here previously but read as an unwanted outline around the glow rather
+   than part of it, so the node is now fill + glow only. */
+.timeline-node {
+  background: #60a5fa;
+  border-radius: 9999px;
+  box-shadow:
+    0 0 18px 2px rgba(96, 165, 250, 0.55),
+    0 0 8px 1px rgba(96, 165, 250, 0.85);
+}
+
+/* ---------- 19.11 Timeline image glow (owner correction pass) ----------
+   Matches the approved glow language used elsewhere (white stroke + dual
+   blue drop-shadow layers). Lives on a wrapper separate from the
+   overflow-hidden crop box so overflow-hidden can't clip its own
+   box-shadow — see CarouselImage's active-image glow for the same pattern. */
+.timeline-image-glow {
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 0 80px 0 rgba(96, 165, 250, 0.25),
+    0 0 30px 0 rgba(96, 165, 250, 0.1);
+}
+
+/* ---------- 19.8 Timeline CTA (owner correction pass) ----------
+   "View All Experiences" is the closing event of the timeline sequence, so
+   its --reveal-delay is computed in HomeExperience.jsx as the later of the
+   rail finishing and the last checkpoint landing — it must never appear
+   while the rail is still drawing. */
+.timeline-cta {
+  opacity: 0;
+  transform: translateX(-16px);
+  transition:
+    opacity 450ms ease-out,
+    transform 450ms ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.timeline-cta.timeline-cta-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- 19.5-19.7 Timeline checkpoint reveal ---------- */
+.timeline-item {
+  opacity: 0;
+  transition:
+    opacity 350ms ease-out,
+    transform 350ms ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.timeline-item--dot {
+  transform: scale(0.7);
+}
+.timeline-item--image {
+  transform: scale(0.94) translateY(10px);
+}
+.timeline-item--info {
+  transform: scale(0.96) translateY(10px);
+}
+.timeline-item-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- 25.1 Navbar active glow ---------- */
+.nav-active-glow {
+  transition:
+    left 350ms ease-in-out,
+    width 350ms ease-in-out,
+    opacity 200ms ease-out;
+}
+
+/* ---------- 15.2 About Me carousel spatial handoff (owner correction pass) ----------
+   Every slide is rendered simultaneously as an absolutely-positioned card
+   inside a shared stage (AboutMeCarousel.jsx), keyed by data-offset — its
+   signed, shortest-path distance from the active index (0 = active, ±1 =
+   side preview, ±2 = off-stage, fully transparent). Navigating only changes
+   each card's data-offset attribute; the transition below then animates
+   every card between its old and new transform/opacity in one continuous
+   motion, so the outgoing active card visibly shrinks into the side-preview
+   slot while the incoming preview grows into center at the same time,
+   instead of a hard content swap. Percentages in translateX resolve against
+   each card's own (shared, un-scaled) box size, so they stay accurate
+   regardless of the scale() also applied.
+   prefers-reduced-motion collapses this to an immediate position change via
+   the site-wide transition-duration override in globals.css. */
+.carousel-stage {
+  --carousel-peek-x: 0%;
+  --carousel-peek-scale: 1;
+  --carousel-peek-opacity: 0;
+  --carousel-far-x: 0%;
+  --carousel-far-scale: 0.55;
+  --carousel-far-opacity: 0;
+}
+@media (min-width: 640px) {
+  .carousel-stage {
+    --carousel-peek-x: 68%;
+    --carousel-peek-scale: 0.72;
+    --carousel-peek-opacity: 0.45;
+    --carousel-far-x: 130%;
+    --carousel-far-scale: 0.5;
+    --carousel-far-opacity: 0;
+  }
+}
+/* --carousel-card-ms lets the entrance reel drive its own per-step duration
+   (AboutMeCarousel.jsx sets it while spinning, then clears it so manual
+   navigation returns to the standard 450ms handoff). */
+.carousel-card {
+  border-color: rgba(255, 255, 255, 0.1);
+  transition:
+    transform var(--carousel-card-ms, 450ms) ease-in-out,
+    opacity var(--carousel-card-ms, 450ms) ease-in-out,
+    box-shadow var(--carousel-card-ms, 450ms) ease-in-out,
+    border-color var(--carousel-card-ms, 450ms) ease-in-out;
+}
+.carousel-card[data-offset='0'] {
+  transform: translateX(0) scale(1);
+  opacity: 1;
+  z-index: 30;
+}
+.carousel-card[data-offset='-1'],
+.carousel-card[data-offset='1'] {
+  opacity: var(--carousel-peek-opacity);
+  z-index: 20;
+  pointer-events: none;
+}
+.carousel-card[data-offset='-1'] {
+  transform: translateX(calc(var(--carousel-peek-x) * -1)) scale(var(--carousel-peek-scale));
+}
+.carousel-card[data-offset='1'] {
+  transform: translateX(var(--carousel-peek-x)) scale(var(--carousel-peek-scale));
+}
+.carousel-card[data-offset='-2'],
+.carousel-card[data-offset='2'] {
+  opacity: var(--carousel-far-opacity);
+  z-index: 10;
+  pointer-events: none;
+}
+.carousel-card[data-offset='-2'] {
+  transform: translateX(calc(var(--carousel-far-x) * -1)) scale(var(--carousel-far-scale));
+}
+.carousel-card[data-offset='2'] {
+  transform: translateX(var(--carousel-far-x)) scale(var(--carousel-far-scale));
+}
+
+/* Active-image glow (owner correction passes) — border/box-shadow target
+   values only; the transition itself lives on .carousel-card above so the
+   glow eases in/out as data-offset changes instead of teleporting between
+   images.
+
+   Glow reads as: stroke -> concentrated edge glow (tight blur, small
+   spread, higher opacity) -> softer outer haze (wide blur, low opacity,
+   kept from ballooning into a large cloud). */
+.carousel-active-image {
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 0 14px 1px rgba(96, 165, 250, 0.55),
+    0 0 80px 0 rgba(96, 165, 250, 0.32);
+}
+
+/* ---------- 15.3 Caption quick crossfade ----------
+   Deliberately shorter/subtler than the image handoff above — content
+   swaps the instant the active index changes, so this only fades the
+   already-updated text in (and, via the same opacity dip, out) rather than
+   choreographing a separate outgoing-text node. */
+.carousel-caption {
+  transition: opacity 220ms ease-in-out;
+}
+.carousel-caption-hidden {
+  opacity: 0;
+}
+.carousel-caption-visible {
+  opacity: 1;
+}
+
+/* ---------- 15.9 Carousel text settle reveal (owner correction pass) ----------
+   Plays exactly once, when the entrance reel settles on Slide 1 (never
+   during the spin, never again on manual navigation afterward — see
+   hasSettledRef in AboutMeCarousel.jsx). Title rises first; the caption
+   travels a shorter distance and starts slightly after it, so it visibly
+   follows the title rather than moving with it. */
+.carousel-text-reveal {
+  opacity: 0;
+  transition:
+    opacity 450ms ease-out,
+    transform 450ms ease-out;
+}
+.carousel-text-reveal-title {
+  transform: translateY(26px);
+}
+.carousel-text-reveal-caption {
+  transform: translateY(18px);
+  transition-delay: 130ms;
+}
+.carousel-text-reveal.carousel-text-reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- 15.4 Carousel entrance reel fade-in ----------
+   The reel's motion is driven in JS (AboutMeCarousel.jsx); this only fades
+   the carousel in as the spin starts so it doesn't sit visible-but-static
+   while the header cascade plays. */
+.carousel-entrance {
+  opacity: 0;
+  transition: opacity 320ms ease-out;
+}
+.carousel-entrance-visible {
+  opacity: 1;
+}
+
+/* ---------- 21. Home Contact quadrant entrance (owner correction pass) ----------
+   Each card converges from the compass direction of its final 2x2 quadrant
+   (NW / NE / SW / SE) with a very subtle scale, settling without overshoot.
+   Per-card --reveal-delay (set in HomeContact.jsx) keeps them slightly
+   staggered but overlapping. The transform lives on a wrapper element, not
+   the card itself, so it can't fight the shared .btn-external hover scale. */
+.contact-card-reveal {
+  opacity: 0;
+  transition:
+    opacity 600ms ease-out,
+    transform 600ms ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.contact-card-reveal-nw {
+  transform: translate(-48px, -34px) scale(0.96);
+}
+.contact-card-reveal-ne {
+  transform: translate(48px, -34px) scale(0.96);
+}
+.contact-card-reveal-sw {
+  transform: translate(-48px, 34px) scale(0.96);
+}
+.contact-card-reveal-se {
+  transform: translate(48px, 34px) scale(0.96);
+}
+.contact-card-reveal.contact-card-reveal-visible {
+  opacity: 1;
+  transform: translate(0, 0) scale(1);
+}

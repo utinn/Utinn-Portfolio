@@ -1,14 +1,22 @@
-import PageContainer from '../components/layout/PageContainer'
+import AboutMe from '../components/sections/AboutMe'
+import FeaturedWorks from '../components/sections/FeaturedWorks'
+import Hero from '../components/sections/Hero'
+import HomeContact from '../components/sections/HomeContact'
+import HomeExperience from '../components/sections/HomeExperience'
 
 /**
- * Home page shell. Sections (Hero, About Me, Featured Projects, Experience
- * Preview, Contact/CTA — CLAUDE.md Section 9) will be implemented after
- * their Figma frames are inspected.
+ * Home page (CLAUDE.md Section 9). Hero is visible immediately on load; the
+ * sections below it reveal on scroll (ANIMATION_SPEC.md Section 14, 19;
+ * INTERACTION_SPEC.md Section 8.3-8.4).
  */
 export default function Home() {
   return (
-    <PageContainer>
-      <h1 className="text-display font-sans">Home</h1>
-    </PageContainer>
+    <>
+      <Hero />
+      <AboutMe />
+      <FeaturedWorks />
+      <HomeExperience />
+      <HomeContact />
+    </>
   )
 }
