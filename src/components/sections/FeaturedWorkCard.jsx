@@ -1,7 +1,7 @@
-import { statusColors } from '../../data/projects'
 import Button from '../common/Button'
 import ImagePlaceholder from '../common/ImagePlaceholder'
 import Label from '../common/Label'
+import ProjectStatus from '../common/ProjectStatus'
 
 /**
  * Single Featured Work card (Home -> Featured Works). Status radar pulse:
@@ -14,6 +14,8 @@ import Label from '../common/Label'
  * FeaturedWorks section owns the single scroll trigger both cards share.
  */
 export default function FeaturedWorkCard({ project, revealSide = 'left', isVisible = true, revealDelayMs = 0 }) {
+  const primaryImage = project.images?.find((image) => image.src)
+
   return (
     <article
       className={`fw-card-reveal fw-card-reveal-${revealSide} ${isVisible ? 'fw-card-reveal-visible' : ''} flex h-full flex-col rounded-[var(--radius-card)] border border-white/10 bg-panel/50 p-6 sm:p-8`}
@@ -21,17 +23,7 @@ export default function FeaturedWorkCard({ project, revealSide = 'left', isVisib
     >
       <div className="flex items-start justify-between gap-4">
         <h3 className="text-xl font-sans font-bold text-foreground">{project.title}</h3>
-        {/* Text color is set here, once, from the shared statusColors map;
-            .status-dot's own CSS already falls back to currentColor when no
-            --status-color override is passed, so the dot inherits the same
-            color instead of the mapping being duplicated in two places. */}
-        <span
-          className="mt-1 inline-flex shrink-0 items-center gap-2 text-caption font-medium"
-          style={{ color: statusColors[project.status] }}
-        >
-          <span aria-hidden="true" className="status-dot" />
-          {project.status}
-        </span>
+        <ProjectStatus status={project.status} className="mt-1" />
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -47,8 +39,8 @@ export default function FeaturedWorkCard({ project, revealSide = 'left', isVisib
           overflow-hidden that crops the screenshot — split into two boxes. */}
       <div className="outline-shine mt-5 rounded-[var(--radius-card)]">
         <div className="aspect-[16/10] overflow-hidden rounded-[var(--radius-card)] border border-white/15">
-          {project.image ? (
-            <img src={project.image} alt={`${project.title} screenshot`} className="h-full w-full object-cover" />
+          {primaryImage?.src ? (
+            <img src={primaryImage.src} alt={primaryImage.alt} className="h-full w-full object-cover" />
           ) : (
             <ImagePlaceholder label={`${project.title} screenshot coming soon`} />
           )}

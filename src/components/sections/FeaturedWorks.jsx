@@ -1,4 +1,4 @@
-import { projects } from '../../data/projects'
+import { homeProjects } from '../../data/projects'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import Button from '../common/Button'
 import SectionHeader, { SECTION_CONTENT_DELAY_MS } from '../common/SectionHeader'
@@ -16,7 +16,6 @@ import FeaturedWorkCard from './FeaturedWorkCard'
  * so they share a trigger and only play once per visit.
  */
 export default function FeaturedWorks() {
-  const featuredProjects = projects.filter((project) => project.featured)
   const { ref, isVisible } = useScrollReveal()
 
   return (
@@ -27,7 +26,7 @@ export default function FeaturedWorks() {
         </SectionHeader>
 
         <div className="mt-14 grid gap-8 lg:grid-cols-2">
-          {featuredProjects.map((project, i) => (
+          {homeProjects.map((project, i) => (
             <FeaturedWorkCard
               key={project.id}
               project={project}

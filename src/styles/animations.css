@@ -76,6 +76,25 @@
   transform: translateX(0);
 }
 
+/* ---------- 14c. Projects child-page content reveal ----------
+   The dedicated Game/AI Projects pages already get their major entrance from
+   the curtain transition, so their content must complement it rather than
+   compete (owner instruction). This is the ANIMATION_SPEC.md Section 7
+   default entrance and nothing more: opacity + a short rise, once per visit.
+   `--reveal-delay` carries the Section 8 stagger (60-120ms) for grids. */
+.project-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 600ms ease-out,
+    transform 600ms ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.project-reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* ---------- 10. Hero staged entrance ---------- */
 @keyframes hero-fade-up {
   from {

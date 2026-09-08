@@ -14,9 +14,14 @@ export const SECTION_CONTENT_DELAY_MS = 600
  * one stacked, progressive language reused by every Home section below the
  * Hero. `revealed` comes from the section's single useScrollReveal() call so
  * all three stages share one trigger and play once per visit.
+ *
+ * `as` promotes the title to the page-level heading (used by the Projects
+ * child pages, whose header IS the document's h1) without duplicating the
+ * cascade markup.
  */
 export default function SectionHeader({
   title,
+  as = 'h2',
   revealed = false,
   className = '',
   captionClassName = 'mt-4',
@@ -24,7 +29,9 @@ export default function SectionHeader({
 }) {
   return (
     <div className={`${revealed ? 'section-header-revealed' : ''} ${className}`.trim()}>
-      <SectionTitle className="section-header-title">{title}</SectionTitle>
+      <SectionTitle as={as} className="section-header-title">
+        {title}
+      </SectionTitle>
       {children && <p className={`section-header-caption ${captionClassName} text-body text-muted`}>{children}</p>}
     </div>
   )

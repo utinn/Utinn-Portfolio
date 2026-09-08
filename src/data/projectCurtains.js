@@ -1,3 +1,6 @@
+import gameCategoryVisual from '../assets/images/projects/GameLogo.png'
+import aiCategoryVisual from '../assets/images/projects/AILogo.png'
+
 /**
  * Projects landing curtain configuration (INTERACTION_SPEC.md Section 13,
  * ANIMATION_SPEC.md Section 18).
@@ -8,7 +11,9 @@
  * MEASURED from docs/figma-reference/projects/CurtainSketch.png (1440x720):
  * the seam sits at x~605 (42% / 58% split) and the supporting figure boxes are
  * 220x155 (Game) and 200x284 (AI) — AI is the taller, more present visual.
- * Gradient stops for each tone live in src/styles/curtains.css.
+ * Both now render at the shared square footprint set in
+ * src/styles/curtains.css (.curtain__figure). Gradient stops for each tone
+ * also live there.
  */
 
 /**
@@ -53,7 +58,7 @@ export const projectCurtains = [
     ariaLabel: 'Game Projects',
     direction: CATEGORY_DIRECTION.game,
     teleportOriginX: '20%',
-    figure: { src: null, requiredPath: 'src/assets/images/projects/Projects_GameCategoryVisual.png' },
+    figure: { src: gameCategoryVisual },
     /**
      * Local hover particles — THE hover particle count for this curtain, and
      * the number the field reaches at full density. Only one curtain carries
@@ -74,7 +79,7 @@ export const projectCurtains = [
     ariaLabel: 'AI Projects',
     direction: CATEGORY_DIRECTION.ai,
     teleportOriginX: '80%',
-    figure: { src: null, requiredPath: 'src/assets/images/projects/Projects_AICategoryVisual.png' },
+    figure: { src: aiCategoryVisual },
     /* Denser than Game: AI is the portfolio's primary category and reads as
        the more luminous of the two. */
     particleCount: 168,

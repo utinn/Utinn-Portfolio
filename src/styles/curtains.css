@@ -270,16 +270,20 @@
   }
 }
 
-/* Supporting category visual. Width + aspect-ratio are driven from the
-   sketch's measured figure boxes (Game 220x155, AI 200x284 at 1440) and are
-   set in CSS, never by the source image, so dropping the real artwork in later
-   cannot move the layout (CLAUDE.md Section 11). max-height keeps the taller
-   AI slot from overflowing a short landscape viewport. */
+/* Supporting category visual. Game and AI share one square footprint —
+   owner correction: the sketch's original boxes (Game 220x155, AI 200x284)
+   read as visually inconsistent, so both curtains now derive width,
+   aspect-ratio and max-height from this single rule instead of per-tone
+   values. Set in CSS, never by the source image, so dropping the real
+   artwork in later cannot move the layout (CLAUDE.md Section 11). */
 .curtain__figure {
   position: relative;
   overflow: hidden;
   border-radius: 0.75rem;
   opacity: 0.9;
+  width: clamp(280px, 30.6vw, 440px);
+  aspect-ratio: 1 / 1;
+  max-height: 44svh;
   transition:
     opacity 320ms ease-out,
     transform 320ms ease-out,
@@ -290,16 +294,6 @@
   height: 100%;
   object-fit: contain;
   object-position: center;
-}
-.curtain[data-tone='game'] .curtain__figure {
-  width: clamp(140px, 15.3vw, 220px);
-  aspect-ratio: 220 / 155;
-  max-height: 22svh;
-}
-.curtain[data-tone='ai'] .curtain__figure {
-  width: clamp(128px, 13.9vw, 200px);
-  aspect-ratio: 200 / 284;
-  max-height: 34svh;
 }
 /* Until the real artwork is supplied the slot is held open, but quietly, so a
    reserved box never competes with the category label. */
@@ -610,6 +604,36 @@
 }
 .curtain--return[data-edge='left'] .curtain__glow {
   inset: 0 -620% 0 0;
+}
+
+/* ---------- Category page content clearance ----------
+   Keeps the Game/AI page body clear of the fixed return curtain. Reads the
+   same --return-curtain-hit token the link's own width comes from (the hit
+   area, not the narrower visible band), so resizing either can never leave
+   the clearance stale.
+
+   From `lg` up the clearance is mirrored onto the free edge as well. The
+   approved page composition is a centred 1200px column, and a one-sided
+   inset would push that column visibly off-centre against the (centred)
+   Navbar. Below `lg` the free edge keeps its normal gutter instead —
+   mirroring there would squeeze the content column on narrow screens for no
+   visual gain, since only one edge actually carries a curtain. */
+.projects-page-body {
+  --curtain-clearance: calc(var(--return-curtain-hit) + 1.5rem);
+}
+/* Narrow screens inset by the bare hit area: the page column's own gutter
+   already supplies the breathing room, and every pixel counts there. */
+.projects-page-body[data-curtain-edge='left'] {
+  padding-left: var(--return-curtain-hit);
+}
+.projects-page-body[data-curtain-edge='right'] {
+  padding-right: var(--return-curtain-hit);
+}
+@media (min-width: 1024px) {
+  .projects-page-body[data-curtain-edge='left'],
+  .projects-page-body[data-curtain-edge='right'] {
+    padding-inline: var(--curtain-clearance);
+  }
 }
 
 /* ---------- Correction G: teleport transition ----------

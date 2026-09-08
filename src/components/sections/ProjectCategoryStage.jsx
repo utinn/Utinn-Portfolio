@@ -28,16 +28,10 @@ export default function ProjectCategoryStage({ category, children }) {
 
   return (
     <DimensionStage isEntering={Boolean(state?.teleportEnter)} isExiting={teleport?.phase === 'cover'}>
-      {/* Keeps page content clear of the fixed return curtain. Reads the same
-          --return-curtain-hit token the link's own width comes from (the hit
-          area, not the narrower visible band), so resizing either can never
-          leave the padding stale. */}
-      <div
-        style={{
-          [curtain.edge === 'right' ? 'paddingRight' : 'paddingLeft']:
-            'calc(var(--return-curtain-hit) + 1.5rem)',
-        }}
-      >
+      {/* Keeps page content clear of the fixed return curtain — the rule
+          itself lives in curtains.css beside the curtain it clears, so both
+          read the same --return-curtain-hit token. */}
+      <div className="projects-page-body" data-curtain-edge={curtain.edge}>
         {children}
       </div>
 

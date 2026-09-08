@@ -1,19 +1,31 @@
-import PageContainer from '../components/layout/PageContainer'
+import ProjectsPageLayout from '../components/layout/ProjectsPageLayout'
 import ProjectCategoryStage from '../components/sections/ProjectCategoryStage'
+import ProjectFeatureCard from '../components/sections/ProjectFeatureCard'
+import ProjectsSection from '../components/sections/ProjectsSection'
+import { featuredProjectsIn } from '../data/projects'
+
+const featuredProjects = featuredProjectsIn('game')
 
 /**
  * Game Projects page (child view of Projects — INTERACTION_SPEC.md Section
- * 14). The return curtain on the right is supplied by ProjectCategoryStage;
- * the page body itself is still a shell awaiting its own Figma frame.
+ * 14), composed from docs/figma-reference/projects/GameProjectsPage.png:
+ * shared page header, then a single featured card. That frame shows no "Other
+ * Projects" block and no second game project exists in the data, so none is
+ * invented (CLAUDE.md Section 22). The return curtain on the right and the
+ * page's clearance from it are supplied by ProjectCategoryStage.
  */
 export default function GameProjects() {
   return (
     <ProjectCategoryStage category="game">
-      {/* pt-10 clears the sticky Navbar, which the untouched placeholder
-          shell used to render underneath. */}
-      <PageContainer className="pt-10">
-        <h1 className="text-display font-sans">Game Projects</h1>
-      </PageContainer>
+      <ProjectsPageLayout>
+        <ProjectsSection title="Featured Game Projects" className="mt-16">
+          <div className="grid gap-12">
+            {featuredProjects.map((project) => (
+              <ProjectFeatureCard key={project.id} project={project} />
+            ))}
+          </div>
+        </ProjectsSection>
+      </ProjectsPageLayout>
     </ProjectCategoryStage>
   )
 }
