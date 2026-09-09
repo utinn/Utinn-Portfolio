@@ -584,6 +584,429 @@
   opacity: 1;
 }
 
+/* ================================================================
+   20. Dedicated Experiences Page (ANIMATION_SPEC.md Section 20,
+   INTERACTION_SPEC.md Sections 17-21)
+   ================================================================
+   Deliberately NOT the Home timeline system (Section 19), which 19.1
+   forbids reusing here: that rail runs left->right and reveals everything on
+   scroll, this one runs top->bottom and reveals only collapsed headers until
+   the user opens a group. The two share visual vocabulary (.timeline-node,
+   .timeline-image-glow) but no motion. */
+
+/* ---------- 20.B Vertical rail draw ----------
+   Linear, not eased: the node delays computed in ExperienceTimeline.jsx are
+   plain fractions of this duration, so a decelerating rail would let the
+   lower nodes light before the rail tip actually reached them. */
+.exp-rail {
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform var(--exp-rail-ms, 2400ms) linear;
+}
+.exp-rail-visible {
+  transform: scaleY(1);
+}
+
+/* Collapsed-header entrance: the node pops, then the title and the
+   organisation/date slide rightward into place (owner instruction: node ->
+   title -> organisation + date, "subtle slide-in-to-the-right"). The
+   translate lives on a wrapper so it can never fight the hover scale on the
+   title itself — same separation the Contact cards use.
+
+   Node entrance (owner motion-polish pass): a plain opacity/scale transition
+   read as too passive, so the node now runs a one-shot "impact" keyframe
+   instead — scale overshoots past 1, recoils, and settles, while its glow
+   (the box-shadow already declared on the shared .timeline-node rule, 19.10)
+   briefly intensifies then fades back to normal. Kept to a single element /
+   single circle throughout (no rings, no second shape) per owner instruction.
+   Because CSS animations win the cascade over normal declarations, animating
+   box-shadow here overrides .timeline-node's static value only while the
+   keyframes run; the animation's own 0%/100% box-shadow values are kept
+   identical to .timeline-node's so it hands back cleanly. prefers-reduced-
+   motion collapses this to its final frame via the global animation-duration
+   override (globals.css), which already satisfies 19.11/20.14 without a
+   dedicated media query here. */
+.exp-node-reveal {
+  opacity: 0;
+  transform: scale(0.55);
+}
+.exp-node-reveal.exp-reveal-visible {
+  animation: exp-node-pop 340ms cubic-bezier(0.22, 0.9, 0.32, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+@keyframes exp-node-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+    box-shadow:
+      0 0 18px 2px rgba(96, 165, 250, 0.55),
+      0 0 8px 1px rgba(96, 165, 250, 0.85);
+  }
+  18% {
+    opacity: 1;
+  }
+  48% {
+    transform: scale(1.14);
+    box-shadow:
+      0 0 34px 5px rgba(96, 165, 250, 0.85),
+      0 0 15px 2.5px rgba(96, 165, 250, 1);
+  }
+  74% {
+    transform: scale(0.97);
+    box-shadow:
+      0 0 22px 3px rgba(96, 165, 250, 0.65),
+      0 0 10px 1.5px rgba(96, 165, 250, 0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow:
+      0 0 18px 2px rgba(96, 165, 250, 0.55),
+      0 0 8px 1px rgba(96, 165, 250, 0.85);
+  }
+}
+.exp-slide-reveal {
+  opacity: 0;
+  transform: translateX(-26px);
+  transition:
+    opacity 420ms ease-out,
+    transform 420ms ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.exp-reveal-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- 20.2 Group title hover ----------
+   Scale + a one-shot shine sweep, the same language as .tag-chip. The shine
+   is clipped to the title box and plays once per hover (no continuous
+   repeat while the pointer rests). transform-origin keeps the title anchored
+   to the rail so growing it can't shift the column. */
+.exp-title {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  transform-origin: left center;
+  transition: transform 250ms ease-out;
+}
+.exp-title::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 34%, rgba(255, 255, 255, 0.5) 50%, transparent 66%);
+  transform: translateX(-120%);
+  opacity: 0;
+  pointer-events: none;
+}
+.exp-head:hover .exp-title,
+.exp-head:focus-visible .exp-title {
+  transform: scale(1.04);
+}
+.exp-head:hover .exp-title::before,
+.exp-head:focus-visible .exp-title::before {
+  opacity: 1;
+  animation: exp-title-shine 1s ease-out 1;
+}
+@keyframes exp-title-shine {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+
+/* ---------- 20.3 Accordion panel ----------
+   grid-template-rows 0fr -> 1fr is the one way to animate "to content
+   height" without measuring the panel in JS or pinning a magic max-height.
+   It does animate a layout property, which Section 4 asks us to avoid where
+   possible — but the alternatives (taking the panel out of flow, or a
+   guessed max-height that clips long entries) would each break the design,
+   so this is the deliberate exception. The staged content reveal below is
+   what the eye actually follows.
+
+   Motion-polish pass (owner instruction): open and close are no longer the
+   same transition played forwards/backwards. CSS resolves a transition's
+   duration/easing from the RULE BEING TRANSITIONED TO, so .exp-panel (the
+   closed state) and .exp-panel-open (the open state) each carry their own
+   timing — a fast decelerating curve on the way open, a faster accelerating
+   one on the way shut. grid-template-rows itself is never given overshoot
+   (an fr track has no headroom to overshoot into without risking layout
+   jank); the "controlled micro-overshoot" feel instead lives entirely on
+   .exp-panel-content below, which only ever moves via transform. */
+.exp-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 280ms cubic-bezier(0.5, 0, 0.75, 0),
+    opacity 180ms ease-in;
+}
+.exp-panel > * {
+  min-height: 0;
+  overflow: hidden;
+}
+.exp-panel-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 260ms ease-out;
+}
+
+/* Opened content wrapper (owner instruction): the "premium physical
+   feedback" overshoot the panel itself can't safely carry. Opening runs a
+   one-shot keyframe with a small scale/translateY overshoot past its resting
+   state before settling; closing runs its own short keyframe (a quick
+   compression, not the open keyframe backward).
+
+   Verified in-browser (Web Animations API scrub) that a keyframe-in /
+   transition-out pairing does NOT work here: once .exp-panel-open is
+   removed, the cancelled animation's value snaps straight to the base rule
+   with no transition firing at all — Chrome does not treat that as a
+   transitionable change. .exp-panel-content-closing is therefore a real,
+   explicit second keyframe, applied for a fixed window by ExperienceTimelineItem
+   (isClosing state) rather than left to a CSS-only handoff. */
+.exp-panel-content {
+  transform: scale(0.985) translateY(-2px);
+}
+.exp-panel-open .exp-panel-content {
+  animation: exp-panel-content-open 300ms cubic-bezier(0.22, 0.9, 0.32, 1) both;
+}
+.exp-panel-content-closing {
+  animation: exp-panel-content-close 160ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+@keyframes exp-panel-content-open {
+  0% {
+    transform: scale(0.985) translateY(-2px);
+  }
+  60% {
+    transform: scale(1.008) translateY(3px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes exp-panel-content-close {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    transform: scale(0.985) translateY(-2px);
+  }
+}
+
+/* ---------- 20.6 / 20.7 / 20.8 Staged expand reveal (owner motion-polish +
+   reset-lifecycle correction pass) ----------
+   Order per owner instruction: tags one by one -> branch lines draw ->
+   key points slide in one by one -> supporting image last.
+
+   Reset bug (root cause): this used to be ancestor-toggle CSS transitions —
+   `.exp-panel-open .exp-tag { opacity: 1; transform: none; }` — on elements
+   that stayed mounted across every open/close cycle of the same experience.
+   transition-delay restarts counting from the moment of a property CHANGE;
+   it does not resume stored progress. Closing removes .exp-panel-open, which
+   should transition each element back to its hidden base state, but that
+   reverse transition carries the SAME delay the element used to enter. A
+   close followed by a fast reopen can land before that reverse transition's
+   delay had even elapsed — at which point the element's actual painted value
+   was still "opacity: 1, transform: none" from the previous open. Re-adding
+   .exp-panel-open then asks for that exact same value again: no delta, so no
+   transition fires, and the element is simply already sitting at its
+   "revealed" state the next time the panel opens. That is the reported
+   "already visible" bug, and it is inherent to gating a persistent element's
+   reveal on a value comparison rather than on the element's own lifecycle.
+
+   Fixed structurally rather than patched: ExperienceTimelineItem.jsx now
+   mounts this whole block only while open (kept mounted a little past close
+   so the panel's own grid-template-rows collapse still has real content to
+   size against), under a key that changes on every open. A freshly mounted
+   element cannot already be sitting at its target value — its keyframe
+   animation below always starts at 0% the instant it exists in the DOM — so
+   there is no ancestor-class dependency left to go stale, and no scenario
+   where "reopen" has nothing new to animate. */
+.exp-tag {
+  display: inline-flex;
+  opacity: 0;
+  animation: exp-tag-pop 240ms cubic-bezier(0.22, 0.9, 0.32, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+@keyframes exp-tag-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-16px) scale(0.97);
+  }
+  22% {
+    opacity: 1;
+  }
+  65% {
+    transform: translateX(3px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+.exp-branch {
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: exp-branch-draw 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+@keyframes exp-branch-draw {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+.exp-point {
+  opacity: 0;
+  animation: exp-point-pop 300ms cubic-bezier(0.22, 0.9, 0.32, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+@keyframes exp-point-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  24% {
+    opacity: 1;
+  }
+  68% {
+    transform: translateX(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+/* Premium and quiet: fade + a short rise with a whisper of scale, never a
+   flashy zoom (owner instruction) — still true, just more intentional now. */
+.exp-figure {
+  opacity: 0;
+  animation: exp-figure-pop 420ms cubic-bezier(0.22, 0.9, 0.32, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+@keyframes exp-figure-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  25% {
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(-2px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ---------- 20.12 Supporting-image crossfade ----------
+   Single fixed frame, one image dominant at a time, no carousel chrome. */
+.exp-slide {
+  opacity: 0;
+  transition: opacity 400ms ease-in-out;
+}
+.exp-slide-active {
+  opacity: 1;
+}
+
+/* ---------- 20.13 More Experiences tail ----------
+   The CTA slides rightward into place once the rail reaches the tail node;
+   the conveyor then rises from below. */
+.exp-cta {
+  opacity: 0;
+  transform: translateX(-26px);
+  transition:
+    opacity 450ms ease-out,
+    transform 450ms ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.exp-conveyor-rise {
+  opacity: 0;
+  transform: translateY(56px);
+  transition:
+    opacity 600ms ease-out,
+    transform 600ms ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.exp-cta.exp-reveal-visible,
+.exp-conveyor-rise.exp-reveal-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- 20.13 Conveyor items (owner correction pass) ----------
+   Track movement is driven in JS (MoreExperiencesConveyor.jsx) rather than a
+   CSS marquee: hover pause, direct pointer/touch dragging and the release
+   momentum that decays back to the default speed all have to share one
+   position accumulator, and swapping a CSS animation's duration mid-run
+   would visibly jump the strip.
+   Everything below is hover presentation only.
+
+   Glow-clipping root cause: .conveyor-frame used to carry overflow-hidden
+   itself (needed to round the image's corners) on the SAME element as its
+   hover box-shadow glow, and it sat directly inside the marquee's
+   overflow-hidden viewport with zero spare vertical room — so the glow's
+   blur had nowhere to bleed into and read as a hard rectangular cutoff on
+   every side. Fixed by splitting responsibilities: .conveyor-frame is now
+   the outer wrapper (overflow: visible) that owns the glow and the hover
+   scale, a plain inner div owns overflow-hidden + the matching rounded
+   corners and clips only the image, and the marquee viewport itself gained
+   vertical bleed room (see the -my-14/py-14 wrapper in the JSX, MDN's
+   negative-margin/matching-padding trick — net zero layout height, real
+   clip-box headroom) — the same wrapper/crop-box split already used for
+   .timeline-image-glow and .carousel-active-image. */
+.conveyor-frame {
+  border-color: rgba(255, 255, 255, 0.12);
+  transition:
+    transform 300ms ease-out,
+    border-color 300ms ease-out,
+    box-shadow 300ms ease-out;
+}
+.conveyor-item:hover .conveyor-frame {
+  transform: scale(1.04);
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 0 80px 0 rgba(96, 165, 250, 0.25),
+    0 0 30px 0 rgba(96, 165, 250, 0.12);
+}
+/* Title first, metadata immediately after (same hierarchy group as the
+   title), caption last — all entering downward (they start above their
+   resting position and drop into it). */
+.conveyor-text {
+  opacity: 0;
+  transform: translateY(-12px);
+  transition:
+    opacity 260ms ease-out,
+    transform 260ms ease-out;
+}
+.conveyor-item:hover .conveyor-text {
+  opacity: 1;
+  transform: none;
+}
+.conveyor-item:hover .conveyor-text--meta {
+  transition-delay: 60ms;
+}
+.conveyor-item:hover .conveyor-text--caption {
+  transition-delay: 150ms;
+}
+/* INTERACTION_SPEC.md 21.7 is an explicit TBD, but 27 is not: hover must
+   never be the only way to reach content. Without a hover-capable pointer
+   the titles and captions are simply always visible. */
+@media (hover: none) {
+  .conveyor-text {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* ---------- 21. Home Contact quadrant entrance (owner correction pass) ----------
    Each card converges from the compass direction of its final 2x2 quadrant
    (NW / NE / SW / SE) with a very subtle scale, settling without overshoot.
