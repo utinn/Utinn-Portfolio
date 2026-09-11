@@ -1,6 +1,15 @@
 const SIZE_CLASSES = {
   sm: 'rounded-md border px-3 py-1 text-caption',
   md: 'rounded-lg border px-4 py-2 text-body',
+  // Skills page. MEASURED from docs/figma-reference/skills/SkillsPage.png:
+  // the toolkit tags are drawn one step larger than the `sm` chip (34px tall
+  // on 14px inline padding, 8px radius) and the language chips larger still
+  // and squarer (36px tall, 16px padding, 4px radius) — two distinct Figma
+  // variants, not a per-page restyle of `sm`. The toolkit padding is exact,
+  // not rounded: Computer Vision fits five tags on one line inside a 546px
+  // card with only a few pixels to spare, so widening it wraps that row.
+  toolkit: 'rounded-lg border px-3.5 py-[6px] text-caption',
+  language: 'rounded-[4px] border px-4 py-[7px] text-caption',
 }
 
 /**

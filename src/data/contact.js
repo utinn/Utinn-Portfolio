@@ -1,10 +1,13 @@
 /**
  * Home Contact section destinations (INTERACTION_SPEC.md Section 26 & 8.3).
  *
- * Email, phone, and the GitHub username are transcribed directly from the
- * approved Figma reference (docs/figma-reference/home/Home_Contact.png) —
- * not fabricated (CLAUDE.md Section 23). The email address also matches the
+ * Email and the GitHub username are transcribed directly from the approved
+ * Figma reference (docs/figma-reference/home/Home_Contact.png) — not
+ * fabricated (CLAUDE.md Section 23). The email address also matches the
  * project owner's known address, confirming it is real content.
+ *
+ * `instagram` was supplied directly by the project owner (replacing the
+ * former phone entry) and is not part of the original Figma reference.
  *
  * `linkedin.url` is intentionally `null`: Figma and the rest of the repo
  * only show the LinkedIn display name ("Justin Christian Woeryadi"), never
@@ -17,8 +20,7 @@
  */
 export const contactInfo = {
   email: 'justinchristian2607@gmail.com',
-  phone: '(+62) 881-881-7799',
-  phoneHref: 'tel:+628818817799',
+  instagram: { label: '@christian0364', url: 'https://www.instagram.com/christian0364' },
   github: { label: 'utinn', url: 'https://github.com/utinn' },
   linkedin: { label: 'Justin Christian Woeryadi', url: 'https://www.linkedin.com/in/utinn' },
 }

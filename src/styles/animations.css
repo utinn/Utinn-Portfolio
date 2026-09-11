@@ -1036,3 +1036,670 @@
   opacity: 1;
   transform: translate(0, 0) scale(1);
 }
+
+/* ================================================================
+   22. Achievements Page carousel (ANIMATION_SPEC.md Section 21,
+   INTERACTION_SPEC.md Section 22)
+   ================================================================
+   REFINEMENT PASS (owner instruction, 2026-09-10 — CLAUDE.md Section 26
+   priority 1 outranks the original measured composition below). The old
+   layout mounted the whole achievement — title, metadata, card,
+   description — per slide and let neighbours peek in clipped at the stage
+   edge. The owner asked for that peek to become a real depth/rotation
+   illusion instead: only the active card carries text, and non-active cards
+   are bare images stacked behind it, shrinking and fading with distance
+   (near = ±1, far = ±2, hidden = further) rather than being clipped.
+
+   Still shares the About Me carousel's offset model (Section 15.2): every
+   card is mounted at once and its emphasis is derived purely from
+   `data-state`, so navigating animates the outgoing and incoming cards in
+   one continuous motion instead of swapping content in place.
+
+   MEASURED from docs/figma-reference/achievements/AchivementsPage.png at the
+   1440px reference (still authoritative where this pass doesn't override
+   it): certificate card aspect ratio 384:290 with a ~16px radius; title 24px
+   bold, metadata 14px #798291, description 16px/20px near-white; the card
+   sits 16px under the metadata and the description 20px under the card. */
+
+.ach-carousel {
+  /* --ach-card-w is the active card's own size — every card shares this box
+     (non-active cards shrink via transform: scale, not by resizing the box),
+     and --ach-step (a percentage) resolves against that same shared box, so
+     both scale responsively together at every breakpoint. Sized up from the
+     measured 384px per the owner's "more dominant" instruction. */
+  --ach-card-w: 84%;
+  --ach-step: 34%;
+  --ach-near-scale: 0.68;
+  --ach-near-opacity: 0;
+  --ach-near-y: 10px;
+  --ach-far-scale: 0.48;
+  --ach-far-opacity: 0;
+  --ach-far-y: 18px;
+  --ach-ms: 520ms;
+  /* Ease-out dominant rather than a symmetric ease-in-out: cards leave
+     promptly and spend most of the duration settling, which reads as the
+     deliberate, slightly sprung snap the owner asked for — without the
+     overshoot that would fight the Figma end state. */
+  --ach-ease: cubic-bezier(0.24, 0.9, 0.26, 1);
+
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 640ms ease-out,
+    transform 640ms ease-out;
+}
+.ach-carousel-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* The depth illusion (near/far peeking cards) only switches on from the
+   tablet breakpoint up — below it the active card already claims most of
+   the viewport width, leaving no clean room to fan neighbours out without
+   risking the "cropped at the edge" look the owner asked to remove. Mobile
+   still gets the full carousel (swipe, arrows, dots); it just shows one
+   card at a time. */
+@media (min-width: 640px) {
+  .ach-carousel {
+    --ach-card-w: 56%;
+    --ach-step: 30%;
+    --ach-near-opacity: 0.42;
+    --ach-far-opacity: 0.16;
+  }
+}
+@media (min-width: 1140px) {
+  .ach-carousel {
+    --ach-card-w: 500px;
+    --ach-step: 38%;
+    --ach-near-opacity: 0.45;
+    --ach-far-opacity: 0.18;
+  }
+}
+
+/* ---------- 22.1 Stage ----------
+   The horizontal clip stays the Figma stage width (1076px) — every offset
+   step below is tuned so even the "far" tier's scaled-down card resolves
+   fully inside that box, so nothing is ever hard-cropped by this clip; cards
+   only ever leave view by fading out. The block padding and its matching
+   negative margin grow the clip box vertically only, so the active card's
+   outer glow and particle field are not sliced off by a clip that exists
+   purely to hide the off-stage cards. `touch-action: pan-y` leaves vertical
+   page scrolling to the browser and hands the component only horizontal
+   gestures. */
+.ach-viewport {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 1076px;
+  margin-block: -110px;
+  padding-block: 110px;
+  overflow: hidden;
+  touch-action: pan-y;
+  cursor: grab;
+}
+.ach-viewport-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/* The reference box every card is centered and scaled against — sized
+   exactly like the active card, so the active card sits at true scale(1)
+   with no extra transform. */
+.ach-track {
+  position: relative;
+  width: var(--ach-card-w);
+  aspect-ratio: 384 / 290;
+  margin-inline: auto;
+  transform: translate3d(var(--ach-drag, 0px), 0, 0);
+  transition: transform var(--ach-ms) var(--ach-ease);
+}
+.ach-viewport-dragging .ach-track {
+  transition: none;
+}
+
+/* Every card fills the same box (`inset: 0` of .ach-track) and is pushed to
+   its depth position purely by transform, so scale()'s default center
+   origin fans every card outward from one shared point — the rotation/depth
+   illusion the owner asked for. */
+.ach-card-item {
+  position: absolute;
+  inset: 0;
+  transform: translate3d(calc(var(--ach-offset, 0) * var(--ach-step)), var(--ach-depth-y, 0px), 0)
+    scale(var(--ach-scale, 1));
+  opacity: var(--ach-opacity, 1);
+  transition:
+    transform var(--ach-ms) var(--ach-ease),
+    opacity var(--ach-ms) var(--ach-ease),
+    filter var(--ach-ms) var(--ach-ease);
+  will-change: transform, opacity;
+}
+.ach-card-item[data-state='active'] {
+  --ach-scale: 1;
+  --ach-opacity: 1;
+  --ach-depth-y: 0px;
+  z-index: 40;
+}
+.ach-card-item[data-state='near'] {
+  --ach-scale: var(--ach-near-scale);
+  --ach-opacity: var(--ach-near-opacity);
+  --ach-depth-y: var(--ach-near-y);
+  z-index: 30;
+  pointer-events: none;
+  filter: blur(0.4px);
+}
+.ach-card-item[data-state='far'] {
+  --ach-scale: var(--ach-far-scale);
+  --ach-opacity: var(--ach-far-opacity);
+  --ach-depth-y: var(--ach-far-y);
+  z-index: 20;
+  pointer-events: none;
+  filter: blur(1.5px);
+}
+.ach-card-item[data-state='hidden'] {
+  --ach-scale: 0.32;
+  --ach-opacity: 0;
+  --ach-depth-y: 26px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ---------- 22.1b Stage row + side arrows ----------
+   Arrows flank the stage directly rather than sitting under the dots, per
+   the owner's instruction — the same `.btn-external` language used
+   everywhere else on the site, just relocated. */
+.ach-stage-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 1180px;
+  margin-inline: auto;
+}
+@media (min-width: 640px) {
+  .ach-stage-row {
+    gap: 20px;
+  }
+}
+.ach-arrow {
+  transition:
+    border-color 200ms ease,
+    transform 200ms ease,
+    box-shadow 200ms ease;
+}
+.ach-arrow:hover {
+  box-shadow: 0 0 18px 1px rgba(96, 165, 250, 0.4);
+}
+
+/* ---------- 22.2 Caption typography (measured) ---------- */
+.ach-slide-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-foreground);
+}
+.ach-slide-meta {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+  /* One-off measured value, not a repeated design rule (CLAUDE.md Section 17)
+     — noticeably dimmer than the shared --color-muted. */
+  color: #798291;
+}
+.ach-slide-description {
+  margin: 20px auto 0;
+  max-width: 640px;
+  font-size: 16px;
+  line-height: 20px;
+  color: rgba(255, 255, 255, 0.88);
+}
+@media (min-width: 640px) {
+  .ach-slide-title {
+    font-size: 24px;
+  }
+}
+
+/* ---------- 22.3 Content synchronisation (ANIMATION_SPEC.md 21.3) ----------
+   Only the active achievement's text ever renders visibly (requirement 3 —
+   non-active cards show no title/issuer/date/caption at all). Every
+   achievement's copy still mounts at once, stacked in one grid cell per
+   block, so the reserved height is always the tallest achievement's and
+   switching cards never shifts the page. `.carousel-caption` (shared with
+   the About Me carousel) provides the crossfade; the cell-level opacity/
+   transform below is what actually swaps the visible content. */
+.ach-caption-top,
+.ach-caption-bottom {
+  text-align: center;
+}
+.ach-caption-grid {
+  display: grid;
+}
+.ach-caption-cell {
+  grid-area: 1 / 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition:
+    opacity var(--ach-ms) var(--ach-ease),
+    transform var(--ach-ms) var(--ach-ease);
+}
+.ach-caption-cell[data-active='true'] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.ach-caption-cell[data-active='true'] .ach-slide-meta {
+  transition-delay: 60ms;
+}
+.ach-caption-cell[data-active='true'] .ach-slide-description {
+  transition-delay: 110ms;
+}
+
+/* ---------- 22.4 Achievement card ----------
+   The active glow is the About Me carousel's two-layer treatment extended to
+   three: a tight edge glow, a mid halo, and a wide low-opacity haze. Splitting
+   it keeps the result bright and legibly special instead of the flat cloud a
+   single large blur produces. Slightly stronger than before per the owner's
+   "active glow can be a touch stronger" instruction. Non-active cards carry
+   no glow of their own — their reduced scale/opacity/blur is the only
+   emphasis cue, keeping the stack from reading as chaotic. */
+.ach-card-wrap {
+  position: absolute;
+  inset: 0;
+  user-select: none;
+}
+.ach-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.02);
+  transition:
+    border-color var(--ach-ms) var(--ach-ease),
+    box-shadow var(--ach-ms) var(--ach-ease);
+}
+.ach-card-media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.ach-card-media img {
+  -webkit-user-drag: none;
+}
+.ach-card-media-btn {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+}
+.ach-card-media-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+.ach-card-item[data-state='active'] .ach-card {
+  border-color: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    0 0 30px 3px rgba(96, 165, 250, 0.62),
+    0 0 90px 14px rgba(96, 165, 250, 0.38),
+    0 0 170px 30px rgba(96, 165, 250, 0.18);
+}
+
+/* Static glass sheen — a fixed highlight, not a travelling shine, so no motion
+   is invented beyond what the specs define (CLAUDE.md Section 13). It only
+   fades in and out with the active state. */
+.ach-card-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.06) 18%,
+      rgba(255, 255, 255, 0) 44%
+    ),
+    linear-gradient(to top, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 32%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  opacity: 0;
+  transition: opacity var(--ach-ms) var(--ach-ease);
+}
+.ach-card-item[data-state='active'] .ach-card-sheen {
+  opacity: 1;
+}
+
+/* ---------- 22.5 Celebratory particles (ANIMATION_SPEC.md 21.4/21.5) ----------
+   Same drift keyframes as the Hero profile field; only the per-dot glow is
+   stronger, which is the "slightly more prominent than the Hero particles"
+   21.4 allows. Only the active card ever owns a particle field now (it is
+   the sole visual origin per 21.4); the outgoing field fades immediately on
+   navigation while the incoming one waits out roughly half the transition
+   before building up, so the field is never seen teleporting between
+   achievements (21.5). */
+.ach-particles {
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+.ach-card-item[data-state='active'] .ach-particles {
+  opacity: 1;
+  transition: opacity 520ms ease-in 260ms;
+}
+.ach-particle {
+  position: absolute;
+  border-radius: 999px;
+  background: var(--particle-color, #ffffff);
+  box-shadow:
+    0 0 9px 2px var(--particle-color, #ffffff),
+    0 0 3px 0.5px var(--particle-color, #ffffff);
+  animation: hero-particle-drift var(--particle-duration, 6s) ease-out infinite;
+  animation-delay: var(--particle-delay, 0s);
+  will-change: transform, opacity;
+}
+
+/* ---------- 22.6 Indicator dots ---------- */
+.ach-dot {
+  height: 10px;
+  width: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  transition:
+    width 320ms var(--ach-ease),
+    background-color 320ms ease,
+    box-shadow 320ms ease;
+}
+.ach-dot:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+.ach-dot-active {
+  width: 28px;
+  background: var(--color-accent);
+  box-shadow: 0 0 12px 1px rgba(96, 165, 250, 0.75);
+}
+
+/* ---------- 22.7 Click-to-enlarge lightbox ----------
+   Owner instruction, not covered by ANIMATION_SPEC.md/INTERACTION_SPEC.md
+   (CLAUDE.md Section 26 — an explicit owner instruction outranks a written
+   spec that simply doesn't address this yet). Kept in the same blue-glow
+   card language as the carousel itself rather than inventing a new visual
+   idiom. prefers-reduced-motion is handled by the site-wide transition/
+   animation override in globals.css, so no separate reduced-motion rule is
+   needed here. */
+.ach-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 6, 10, 0.78);
+  backdrop-filter: blur(6px);
+  animation: ach-lightbox-in 220ms ease-out;
+}
+@keyframes ach-lightbox-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.ach-lightbox-frame {
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(8, 11, 18, 0.6);
+  box-shadow:
+    0 0 30px 2px rgba(96, 165, 250, 0.55),
+    0 0 90px 14px rgba(96, 165, 250, 0.3),
+    0 24px 60px rgba(0, 0, 0, 0.5);
+  padding: 6px;
+  animation: ach-lightbox-scale-in 260ms cubic-bezier(0.24, 0.9, 0.26, 1);
+}
+@keyframes ach-lightbox-scale-in {
+  from {
+    transform: scale(0.94);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.ach-lightbox-image {
+  display: block;
+  max-width: min(920px, 92vw);
+  max-height: 86vh;
+  width: auto;
+  height: auto;
+  border-radius: 16px;
+  object-fit: contain;
+}
+.ach-lightbox-placeholder {
+  width: min(640px, 92vw);
+  aspect-ratio: 384 / 290;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.ach-lightbox-close {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  display: flex;
+  height: 40px;
+  width: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(8, 11, 18, 0.92);
+  color: var(--color-foreground);
+  font-size: 22px;
+  line-height: 1;
+  transition:
+    border-color 200ms ease,
+    transform 200ms ease,
+    box-shadow 200ms ease;
+}
+.ach-lightbox-close:hover {
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 16px 1px rgba(96, 165, 250, 0.55);
+  transform: scale(1.06);
+}
+.ach-lightbox-close:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* ================================================================
+   SKILLS AND CREDENTIALS PAGE (ANIMATION_SPEC.md Section 22)
+   ================================================================
+   Every duration and easing below is a `var()` published from
+   src/motion/skillsMotion.js (SKILLS_MOTION_VARS) on the page root, and
+   every delay arrives per-element as `--reveal-delay` from the same file.
+   Nothing here is a hard-coded timing value, so the page is tuned in one
+   place. The fallbacks in each var() only matter if a rule is ever reused
+   outside that page root.
+
+   Reduced motion needs no dedicated block: globals.css already forces every
+   duration and delay to ~0, which collapses each of these to its end frame
+   with the full Figma appearance intact (22.1/22.2/22.3 reduced-motion
+   rules). */
+
+/* ---------- 22.0 Left-to-right wipe ----------
+   The page's one "horizontal reveal" primitive (owner instruction), used by
+   the three section titles and by every toolkit category title. It is a
+   progressive left-to-right uncover — the same idea as 22.1's typing-like
+   title reveal, minus a per-character rhythm that would fight the Figma
+   typography — carried by clip-path so the glyphs never stretch and the text
+   settles on the exact Figma metrics. The opacity leg is deliberately short:
+   it takes the hard edge off the wipe's start without turning it into a
+   plain fade. */
+.skill-wipe {
+  opacity: 0;
+  clip-path: inset(0 100% 0 0);
+  transform: translateX(var(--skill-wipe-from, -10px));
+  transition:
+    opacity 140ms linear,
+    clip-path var(--skill-wipe-ms, 520ms) var(--skill-ease-out),
+    transform var(--skill-wipe-ms, 520ms) var(--skill-ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.skill-wipe-visible {
+  opacity: 1;
+  clip-path: inset(0 0 0 0);
+  transform: none;
+}
+
+/* ---------- 22.0 Shared rise ----------
+   Fade + a short rise, optionally with a whisper of scale — the site's quiet
+   settle, reused by the Education institution/date/panel and the Language
+   proficiency text so those never read as a second motion language.
+   --rise-y / --rise-scale are per-use dials. */
+.skill-rise {
+  opacity: 0;
+  transform: translateY(var(--rise-y, 12px)) scale(var(--rise-scale, 1));
+  transition:
+    opacity var(--rise-ms, 380ms) var(--skill-ease-out),
+    transform var(--rise-ms, 380ms) var(--skill-ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.skill-rise-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- 22.0 Frame materialisation ----------
+   Owner instruction for the toolkit cards ("ease-out zoom-in, the glowing
+   frame materialising into place"), reused by the Language frame. The glow
+   is animated with the box, not declared statically, which is what makes it
+   read as materialising rather than as a box that fades in already lit.
+   --frame-glow carries the element's final Figma glow so one rule can serve
+   both frames. */
+.skill-frame {
+  opacity: 0;
+  transform: scale(var(--frame-from, 0.94));
+  box-shadow: 0 0 0 0 rgba(96, 165, 250, 0);
+  transition:
+    opacity var(--frame-ms, 520ms) var(--skill-ease-out),
+    transform var(--frame-ms, 520ms) var(--skill-ease-out),
+    box-shadow var(--frame-ms, 520ms) var(--skill-ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.skill-frame-visible {
+  opacity: 1;
+  transform: none;
+  box-shadow: var(--frame-glow, 0 0 60px rgba(96, 165, 250, 0.1), 0 0 24px rgba(96, 165, 250, 0.16));
+}
+
+/* ---------- 22.1 Toolkit tag pop ----------
+   Mirror image of .exp-tag: the Skills tags reveal RIGHTMOST FIRST and then
+   travel leftward (owner instruction, superseding 22.1's left-to-right
+   ordering), so each tag enters from its right and overshoots slightly to
+   the left — the motion has to run with the sequence, not against it.
+   Lives on a wrapper span around <Label> so the settled transform can never
+   fight .tag-chip's hover scale (same separation .exp-tag uses). */
+.tk-tag {
+  display: inline-flex;
+  opacity: 0;
+  transform: translateX(12px) scale(0.96);
+}
+.tk-tag-visible {
+  animation: tk-tag-pop var(--tk-tag-ms, 300ms) var(--skill-ease) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+@keyframes tk-tag-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(12px) scale(0.96);
+  }
+  24% {
+    opacity: 1;
+  }
+  68% {
+    transform: translateX(-3px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* ---------- 22.2 Education rail draw ----------
+   Linear, exactly like .exp-rail and for the same reason: the checkpoint
+   delays are plain fractions of this duration (railProgressAt() in
+   skillsMotion.js), so an eased rail would let nodes light before the tip
+   reached them. --edu-rail-inset is the shared geometry constant — the rail
+   is inset from the 3-column grid on both sides, and that same number is fed
+   back into the delay maths. */
+.edu-rail-track {
+  margin-inline: var(--edu-rail-inset, 5%);
+}
+.edu-rail {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--edu-rail-ms, 1500ms) linear;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.edu-rail-visible {
+  transform: scaleX(1);
+}
+
+/* ---------- 22.3 Language connector fill ----------
+   "Energy extending downward", in two transform-only layers inside a
+   fixed-height wrapper so nothing below it can shift:
+
+     .lang-line       the rail itself, scaleY(0 -> 1) from its top edge
+     .lang-line-head  a bright point riding the growing tip, which fades out
+                      as the fill lands so the settled line matches Figma's
+                      plain connector exactly
+
+   Both share --lang-line-ms and --skill-ease-out; if the head is ever
+   retimed independently it will visibly drift off the tip. The head's travel
+   distance is --lang-line-h, the wrapper's own height. */
+.lang-line {
+  transform: scaleY(0);
+  transform-origin: top center;
+  background: linear-gradient(to bottom, rgba(96, 165, 250, 0.55), rgba(96, 165, 250, 0.75));
+  box-shadow: 0 0 10px 0 rgba(96, 165, 250, 0.35);
+  transition: transform var(--lang-line-ms, 480ms) var(--skill-ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.lang-line-visible {
+  transform: scaleY(1);
+}
+/* Centring is done with `left`/`top` offsets, never a translate: the
+   keyframe below owns `transform` outright, so any centring translate on
+   this element would be discarded the moment the animation starts. */
+.lang-line-head {
+  position: absolute;
+  left: calc(50% - 3.5px);
+  top: -3.5px;
+  background: #bfdbfe;
+  border-radius: 9999px;
+  box-shadow:
+    0 0 14px 3px rgba(147, 197, 253, 0.85),
+    0 0 5px 1px rgba(191, 219, 254, 0.95);
+  opacity: 0;
+}
+.lang-line-head-visible {
+  animation: lang-line-head var(--lang-line-ms, 480ms) var(--skill-ease-out) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+@keyframes lang-line-head {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  18% {
+    opacity: 1;
+  }
+  76% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(var(--lang-line-h, 102px));
+  }
+}
