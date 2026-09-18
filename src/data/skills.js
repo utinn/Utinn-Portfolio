@@ -52,12 +52,6 @@ export const educationMilestones = [
     date: 'July 2024 - July 2028',
     detail: 'GPA : 3.93',
   },
-  {
-    id: 'industry-corporate',
-    institution: 'Industry/Corporate',
-    date: 'July 2028 - N/A',
-    detail: 'Not Reached',
-  },
 ]
 
 /**
@@ -71,5 +65,4 @@ export const educationMilestones = [
 export const languages = [
   { id: 'indonesian', name: 'Indonesian', proficiency: 'Native' },
   { id: 'english', name: 'English', proficiency: 'Professional Working Proficiency' },
-  { id: 'chinese', name: 'Chinese', proficiency: 'Elementary Proficiency' },
 ]

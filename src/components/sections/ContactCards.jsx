@@ -16,6 +16,14 @@ const QUADRANT_STAGGER_MS = { nw: 0, ne: 70, sw: 70, se: 140 }
  * component when its entrance clock starts, so the header -> cards cascade
  * (ANIMATION_SPEC.md Section 21) works identically regardless of which page
  * hosts it.
+ *
+ * Hover polish (owner instruction, not covered by ANIMATION_SPEC.md/
+ * INTERACTION_SPEC.md): each `ContactLink` card carries the shared
+ * `.contact-card` blue-glow-on-hover/focus-visible treatment plus a one-shot
+ * `.contact-card-sheen` sweep — same trigger mechanism as the approved
+ * `.tag-chip` shine (animations.css), so it plays once per hover/focus entry
+ * and never loops while hovered. Defined once here so both the Home preview
+ * and the dedicated Contact page inherit identical behavior automatically.
  */
 export default function ContactCards({ revealed, startDelayMs = 0 }) {
   const quadrant = (corner) => ({
@@ -70,8 +78,9 @@ function ContactLink({ href, icon, label, external = false }) {
       href={href}
       target={external ? '_blank' : undefined}
       rel={external ? 'noopener noreferrer' : undefined}
-      className="btn-external flex h-full items-center gap-4 rounded-2xl border border-white/15 bg-panel/40 px-5 py-4 text-left transition-colors hover:border-accent/50"
+      className="btn-external contact-card relative flex h-full items-center gap-4 rounded-2xl border border-white/15 bg-panel/40 px-5 py-4 text-left hover:border-accent/50"
     >
+      <span className="contact-card-sheen" aria-hidden="true" />
       {icon}
       <span className="truncate text-body font-medium text-foreground">{label}</span>
     </a>

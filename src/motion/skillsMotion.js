@@ -35,8 +35,8 @@ export const SKILLS_MOTION = {
     rowStepMs: 560,
     /** Inside a card, measured from that row's start: */
     frameOffsetMs: 200, // category title -> frame zoom-in
-    tagsOffsetMs: 430, // frame -> first (RIGHTMOST) tag
-    tagStepMs: 80, // tag -> next tag, travelling right to left
+    tagsOffsetMs: 430, // frame -> first (LEFTMOST) tag
+    tagStepMs: 80, // tag -> next tag, travelling left to right
   },
 
   education: {

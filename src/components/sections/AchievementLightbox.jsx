@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import ImagePlaceholder from '../common/ImagePlaceholder'
 
 /**
@@ -8,6 +9,20 @@ import ImagePlaceholder from '../common/ImagePlaceholder'
  * unwritten spec (CLAUDE.md Section 26), so this stays intentionally simple:
  * a centered enlargement with the same blue-glow card language as the
  * carousel, closable via backdrop click, the close button, or Escape.
+ *
+ * Portal fix (owner correction pass): `.ach-lightbox` is `position: fixed`,
+ * but AchievementsCarousel.jsx renders this component as a child of
+ * `.ach-carousel`, which carries its own entrance `transform` (animations.css
+ * "22 Achievements Page carousel" — `transform: translateY(...)` on both the
+ * base and `-revealed` states, never `transform: none`). Per the CSS spec,
+ * any non-`none` ancestor `transform` establishes the containing block for a
+ * `position: fixed` descendant, so the lightbox was being sized/positioned
+ * against the carousel's own box instead of the viewport — the "still feels
+ * constrained by the page/carousel context" bug. `createPortal` renders this
+ * subtree as a real child of `document.body`, matching how
+ * CertificateLightbox already achieves true viewport-fixed positioning
+ * (Certificates.jsx never nests its lightbox under a transformed ancestor),
+ * without touching any `.ach-lightbox*` CSS or the carousel's own structure.
  */
 export default function AchievementLightbox({ item, open, onClose }) {
   const closeButtonRef = useRef(null)
@@ -34,7 +49,7 @@ export default function AchievementLightbox({ item, open, onClose }) {
 
   if (!open || !item) return null
 
-  return (
+  return createPortal(
     <div
       className="ach-lightbox"
       role="dialog"
@@ -62,6 +77,7 @@ export default function AchievementLightbox({ item, open, onClose }) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

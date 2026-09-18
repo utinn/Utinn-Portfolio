@@ -1,6 +1,5 @@
 import { languages } from '../../data/skills'
 import { SKILLS_MOTION } from '../../motion/skillsMotion'
-import { useScrollReveal } from '../../hooks/useScrollReveal'
 import Label from '../common/Label'
 
 const { titleToFrameMs, frameToChipsMs, chipStepMs, chipToDotMs, chipsToLinesMs, lineStepMs, lineToTextMs } =
@@ -19,11 +18,11 @@ const lineDelayMs = (index) =>
  * Language section of the Skills and Credentials Page.
  *
  * Sequence (owner instruction, refining ANIMATION_SPEC.md 22.3): section
- * title -> the rounded frame materialises -> the three chips land left to
- * right -> each chip's connector fills downward -> each proficiency label
- * arrives as its own line lands. Per language the 22.3 hierarchy still holds
- * exactly — chip, then line, then proficiency, never a label before its line
- * — the chips simply read as one group rather than three separate entries.
+ * title -> the rounded frame materialises -> the chips land left to right ->
+ * each chip's connector fills downward -> each proficiency label arrives as
+ * its own line lands. Per language the 22.3 hierarchy still holds exactly —
+ * chip, then line, then proficiency, never a label before its line — the
+ * chips simply read as one group rather than separate entries.
  *
  * MEASURED from docs/figma-reference/skills/SkillsPage.png at the 1440px
  * reference: a 564px frame, ~91px tall with 26px above the chips, the
@@ -34,12 +33,15 @@ const lineDelayMs = (index) =>
  * rather than as a wrapper, because the connectors have to start inside it
  * and cross its lower edge — a bordered wrapper would have to clip them or
  * fight z-index for it.
+ *
+ * `isVisible` is owned by SkillsEducationLanguage.jsx, not this component —
+ * the owner's instruction is that Education and Language start their reveal
+ * sequences from one shared viewport trigger, so there is a single
+ * IntersectionObserver one level up instead of two independent ones.
  */
-export default function SkillsLanguage() {
-  const { ref, isVisible } = useScrollReveal({ threshold: 0.2 })
-
+export default function SkillsLanguage({ isVisible }) {
   return (
-    <section ref={ref} aria-labelledby="language-heading" className="mx-auto mt-24 w-full max-w-[612px] px-6">
+    <section aria-labelledby="language-heading" className="mx-auto w-full max-w-[612px] px-6">
       <h2
         id="language-heading"
         className={`skill-wipe ${isVisible ? 'skill-wipe-visible' : ''} mx-auto w-fit text-h2 font-sans text-foreground`}
@@ -59,7 +61,7 @@ export default function SkillsLanguage() {
           }}
         />
 
-        <ul className="relative grid grid-cols-3">
+        <ul className="relative grid grid-cols-2">
           {languages.map((language, index) => (
             <li key={language.id} className="flex flex-col items-center pt-[26px]">
               <span

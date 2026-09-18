@@ -25,13 +25,22 @@ export default function Projects() {
      transient, and a transient signal is what caused the replay bug this
      replaces (see curtains.css, .curtain--panel-enter). */
   const isTeleportEntry = Boolean(state?.teleportEnter)
+  // A global-warp arrival (PageWarpProvider.jsx) reveals /projects the same
+  // way a teleport does: fully rendered behind a cover that clears after.
+  // Route state again, so this is readable on the very first render — the
+  // curtains' opacity/translate entrance (and the gradients, icons and glow
+  // that live inside them) must already be settled before the warp clears,
+  // never resolving in afterward. The teleport dissolve-in on DimensionStage
+  // stays scoped to real teleport entries only (its own transition system).
+  const isWarpEntry = Boolean(state?.fromPageWarp)
+  const skipLocalEntrance = isTeleportEntry || isWarpEntry
 
   return (
     <DimensionStage isEntering={isTeleportEntry} isExiting={teleport?.phase === 'cover'}>
       <h1 className="sr-only">Projects</h1>
       <ProjectsCurtainNav
         teleport={teleport}
-        playEntrance={!isTeleportEntry}
+        playEntrance={!skipLocalEntrance}
         onSelect={(curtain) =>
           startTeleport({
             id: curtain.id,

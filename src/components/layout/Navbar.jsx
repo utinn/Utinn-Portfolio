@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { primaryNavItems, projectsChildPaths } from '../../data/navigation'
+import { usePageWarp } from '../../hooks/usePageWarp'
+import NavFireflies from './NavFireflies'
 import PageContainer from './PageContainer'
 
 // TODO: place the real CV file at public/Navbar_CV.pdf (CLAUDE.md owner
@@ -13,42 +15,102 @@ const CV_HREF = '/Navbar_CV.pdf'
  * spacing, and colors are approximated from the Figma reference PNGs and
  * provisional pending Figma MCP verification.
  *
- * The active item's glow is a single indicator that measures the active
- * NavLink's position and animates to it (ANIMATION_SPEC.md Section 25.1)
- * rather than every item owning its own static highlight.
+ * The active indicator is a single measured box that slides to the active
+ * NavLink's position (ANIMATION_SPEC.md Section 25.1) rather than every item
+ * owning its own static highlight. Owner redesign: the old flat blue pill is
+ * gone — the box now carries only a faint aura, and the NavFireflies cloud
+ * sits beside it at the <ul> level, receiving the same measurement as its
+ * chase target (motion-polish pass: each firefly springs to the new item on
+ * its own, rather than riding the sliding box as a rigid group).
  */
 export default function Navbar() {
   const { pathname } = useLocation()
+  const { pendingPath, warp } = usePageWarp()
   const isProjectsActive = pathname === '/projects' || projectsChildPaths.includes(pathname)
-  const activePath = isProjectsActive ? '/projects' : pathname
+  // The indicator (aura + fireflies) points at the route being warped TO
+  // from the moment of the click, so the fireflies chase during pre-warp
+  // and are settled around the new item when the destination arrives.
+  // aria-current stays on the real route until the swap.
+  const indicatorPath = pendingPath ?? pathname
+  const activePath =
+    indicatorPath === '/projects' || projectsChildPaths.includes(indicatorPath) ? '/projects' : indicatorPath
 
   const listRef = useRef(null)
   const itemRefs = useRef({})
-  const [glowStyle, setGlowStyle] = useState({ opacity: 0 })
+  const [activeBox, setActiveBox] = useState(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  // Measures the active NavLink's DOM position to drive the sliding glow
-  // indicator — an external-layout sync, so setState here (not derived
-  // during render) is intentional.
+  // Measures the active NavLink's box (in the <ul>'s space) to drive both the
+  // sliding aura and the fireflies' chase target — an external-layout sync,
+  // so setState here (not derived during render) is intentional.
   const measureGlow = useCallback(() => {
     const activeEl = itemRefs.current[activePath]
     const listEl = listRef.current
     if (!activeEl || !listEl) {
-      setGlowStyle({ opacity: 0 })
+      setActiveBox(null)
       return
     }
     const listRect = listEl.getBoundingClientRect()
     const itemRect = activeEl.getBoundingClientRect()
-    setGlowStyle({ opacity: 1, left: itemRect.left - listRect.left, width: itemRect.width })
+    const next = {
+      left: itemRect.left - listRect.left,
+      top: itemRect.top - listRect.top,
+      width: itemRect.width,
+      height: itemRect.height,
+    }
+    // Keep the previous object when nothing moved, so observer callbacks
+    // that re-measure identical geometry don't retarget the fireflies.
+    setActiveBox((prev) =>
+      prev &&
+      Math.abs(prev.left - next.left) < 0.5 &&
+      Math.abs(prev.top - next.top) < 0.5 &&
+      Math.abs(prev.width - next.width) < 0.5 &&
+      Math.abs(prev.height - next.height) < 0.5
+        ? prev
+        : next,
+    )
   }, [activePath])
+
+  const glowStyle = activeBox ? { opacity: 1, left: activeBox.left, width: activeBox.width } : { opacity: 0 }
+
+  // Stable object per measurement so NavFireflies only retargets on a real
+  // change, never on an unrelated Navbar re-render.
+  const fireflyTarget = useMemo(
+    () =>
+      activeBox
+        ? {
+            x: activeBox.left + activeBox.width / 2,
+            y: activeBox.top + activeBox.height / 2,
+            w: activeBox.width,
+            h: activeBox.height,
+          }
+        : null,
+    [activeBox],
+  )
 
   useLayoutEffect(() => {
     measureGlow()
   }, [measureGlow])
 
+  // Re-measure whenever the list's geometry changes — not just on window
+  // resize. The initial layout-effect measurement runs before Space Grotesk
+  // has loaded, and the fallback font is narrower, so every item's left edge
+  // shifts once the webfont swaps in (the old pill silently sat ~30px left of
+  // its label until the next resize). ResizeObserver catches the swap and any
+  // other reflow; fonts.ready covers the swap explicitly as well.
   useEffect(() => {
     window.addEventListener('resize', measureGlow)
-    return () => window.removeEventListener('resize', measureGlow)
+    const listEl = listRef.current
+    const observer = listEl && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measureGlow) : null
+    if (observer) {
+      observer.observe(listEl)
+      listEl.querySelectorAll('a').forEach((el) => observer.observe(el))
+    }
+    document.fonts?.ready.then(measureGlow)
+    return () => {
+      window.removeEventListener('resize', measureGlow)
+      observer?.disconnect()
+    }
   }, [measureGlow])
 
   useEffect(() => {
@@ -56,7 +118,9 @@ export default function Navbar() {
   }, [pathname])
 
   return (
-    <header className="sticky top-4 z-50 md:top-6">
+    // data-warp-phase drives the Navbar's subtle spacetime bend during the
+    // global warp (animations.css "26"); the header stays visible throughout.
+    <header className="site-header sticky top-4 z-50 md:top-6" data-warp-phase={warp?.phase}>
       <PageContainer>
         <nav
           aria-label="Primary"
@@ -67,11 +131,10 @@ export default function Navbar() {
           </Link>
 
           <ul ref={listRef} className="relative hidden items-center gap-1 lg:flex">
-            <span
-              aria-hidden="true"
-              className="nav-active-glow absolute inset-y-0 my-1 rounded-full bg-accent/15 ring-1 ring-accent/40"
-              style={glowStyle}
-            />
+            <span aria-hidden="true" className="nav-active-glow absolute inset-y-0 my-1 rounded-full" style={glowStyle}>
+              <span className="nav-active-aura" />
+            </span>
+            <NavFireflies target={fireflyTarget} />
             {primaryNavItems.map((item) => {
               const isActive = item.path === '/projects' ? isProjectsActive : pathname === item.path
               return (

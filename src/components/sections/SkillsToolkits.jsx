@@ -17,24 +17,24 @@ const toRows = (groups) =>
   }, [])
 
 /**
- * One toolkit group: category title -> frame -> tags, right to left.
+ * One toolkit group: category title -> frame -> tags, left to right.
  *
  * All three stages share the row's single delay so the pair of cards in a row
  * moves as one unit, which is what makes the "2 cards + 2 cards + 2 cards +
  * 2 cards" cadence legible (owner instruction / 22.1 "Group Coordination").
  *
- * Tag order is the reveal's only reversed axis: `tags.length - 1 - index`
- * turns Figma's left-to-right array into a rightmost-first sequence without
- * ever reordering the markup, so the DOM, the reading order and the
- * accessibility tree all stay in Figma's order (owner instruction,
- * superseding 22.1's left-to-right stagger).
+ * Tag order follows Figma's left-to-right array directly (`index *
+ * tagStepMs`, owner correction pass — supersedes an earlier rightmost-first
+ * pass), so the DOM, the reveal order, the reading order and the
+ * accessibility tree all stay in Figma's order (22.1's left-to-right
+ * stagger).
  */
 /** Starts the section's shared clock once, at the moment it is first needed. */
 function startClock(clock, startDelayMs) {
   if (clock.current === null) clock.current = Date.now() + startDelayMs
 }
 
-function ToolkitGroup({ group, revealed, delayMs }) {
+function ToolkitGroup({ group, revealed, delayMs, onTagAnimationEnd }) {
   return (
     <div className="min-w-0">
       <h3
@@ -58,8 +58,9 @@ function ToolkitGroup({ group, revealed, delayMs }) {
               <span
                 className={`tk-tag ${revealed ? 'tk-tag-visible' : ''}`}
                 style={{
-                  '--reveal-delay': `${delayMs + tagsOffsetMs + (group.tags.length - 1 - index) * tagStepMs}ms`,
+                  '--reveal-delay': `${delayMs + tagsOffsetMs + index * tagStepMs}ms`,
                 }}
+                onAnimationEnd={onTagAnimationEnd}
               >
                 <Label size="toolkit">{tag}</Label>
               </span>
@@ -86,20 +87,47 @@ function ToolkitGroup({ group, revealed, delayMs }) {
  * Whichever of the section or its first row is revealed first starts the
  * shared clock, so the cadence does not depend on which observer React
  * happens to flush first.
+ *
+ * `onRowComplete` (last row only, owner instruction — Education/Language must
+ * gate on the REAL end of Toolkits, not an estimated timeout) fires once the
+ * final tag of the final row finishes its own `tk-tag-pop` animation. Every
+ * tag in the row reports its own `animationend`; the row counts them against
+ * its own tag total rather than guessing which tag happens to be staggered
+ * last, so it stays correct even if a group's tag count changes later.
  */
-function ToolkitRow({ groups, rowIndex, sectionClock, startDelayMs }) {
+function ToolkitRow({ groups, rowIndex, sectionClock, startDelayMs, isLastRow, onRowComplete }) {
   const { ref, isVisible } = useScrollReveal({ threshold: 0.25 })
   const delayRef = useRef(null)
+  const completedTagCountRef = useRef(0)
+  const rowCompleteRef = useRef(false)
 
   if (isVisible && delayRef.current === null) {
     startClock(sectionClock, startDelayMs)
     delayRef.current = remainingDelayMs(sectionClock.current, rowsStartMs + rowIndex * rowStepMs)
   }
 
+  const totalTagCount = isLastRow ? groups.reduce((count, group) => count + group.tags.length, 0) : 0
+
+  const handleTagAnimationEnd = isLastRow
+    ? () => {
+        completedTagCountRef.current += 1
+        if (!rowCompleteRef.current && completedTagCountRef.current >= totalTagCount) {
+          rowCompleteRef.current = true
+          onRowComplete?.()
+        }
+      }
+    : undefined
+
   return (
     <div ref={ref} className="grid grid-cols-1 gap-x-14 gap-y-[34px] md:grid-cols-2">
       {groups.map((group) => (
-        <ToolkitGroup key={group.id} group={group} revealed={isVisible} delayMs={delayRef.current ?? 0} />
+        <ToolkitGroup
+          key={group.id}
+          group={group}
+          revealed={isVisible}
+          delayMs={delayRef.current ?? 0}
+          onTagAnimationEnd={handleTagAnimationEnd}
+        />
       ))}
     </div>
   )
@@ -116,10 +144,18 @@ function ToolkitRow({ groups, rowIndex, sectionClock, startDelayMs }) {
  * `startDelayMs` is the page header cascade — this section is on screen at
  * load, so its title has to wait for "Skills" and its caption rather than
  * racing them.
+ *
+ * `onComplete` (owner instruction) fires once, the moment the actual last
+ * row's actual last tag finishes animating — see ToolkitRow. Education +
+ * Language (SkillsEducationLanguage.jsx) gate their own reveal on this so the
+ * page reads as one ordered sequence instead of two independently-triggered
+ * sections, without ever blocking scroll.
  */
-export default function SkillsToolkits({ startDelayMs = 0 }) {
+export default function SkillsToolkits({ startDelayMs = 0, onComplete }) {
   const { ref, isVisible } = useScrollReveal({ threshold: 0.05 })
   const sectionClock = useRef(null)
+  const rows = toRows(toolkitGroups)
+  const lastRowIndex = rows.length - 1
 
   if (isVisible) startClock(sectionClock, startDelayMs)
 
@@ -134,13 +170,15 @@ export default function SkillsToolkits({ startDelayMs = 0 }) {
       </h2>
 
       <div className="mt-10 flex flex-col gap-[34px]">
-        {toRows(toolkitGroups).map((groups, rowIndex) => (
+        {rows.map((groups, rowIndex) => (
           <ToolkitRow
             key={groups[0].id}
             groups={groups}
             rowIndex={rowIndex}
             sectionClock={sectionClock}
             startDelayMs={startDelayMs}
+            isLastRow={rowIndex === lastRowIndex}
+            onRowComplete={onComplete}
           />
         ))}
       </div>

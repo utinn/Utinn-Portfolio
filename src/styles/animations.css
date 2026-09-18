@@ -194,7 +194,10 @@
 .bg-particles-layer {
   position: absolute;
   inset: -20% -20%;
-  animation: bg-particles-drift 70s linear infinite;
+  /* 28s = 70s / 2.5 (owner instruction — ~2.5x the previous global drift
+     speed). Same diagonal distance/direction and tile-seamless loop as
+     before; only the duration changed. */
+  animation: bg-particles-drift 28s linear infinite;
   will-change: transform;
 }
 
@@ -437,12 +440,80 @@
   transform: none;
 }
 
-/* ---------- 25.1 Navbar active glow ---------- */
+/* ---------- 25.1 Navbar active indicator ----------
+   The measured box that slides to the active item. Owner redesign: it no
+   longer paints a pill itself — it holds a faint aura and the firefly cloud
+   below. overflow stays visible on purpose so fireflies can hover slightly
+   past the item (bounded by NAV_FIREFLIES.overflowPx in NavFireflies.jsx). */
 .nav-active-glow {
+  overflow: visible;
   transition:
     left 350ms ease-in-out,
     width 350ms ease-in-out,
     opacity 200ms ease-out;
+}
+
+/* Very soft aura behind the active label — a hint of the old highlight, kept
+   well below the fireflies so they carry the identity. Tune the 0.12 alpha
+   for aura strength. */
+.nav-active-aura {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at center, rgba(96, 165, 250, 0.12), rgba(96, 165, 250, 0) 72%);
+}
+
+/* ---------- 25.1 Navbar active fireflies (owner redesign + motion-polish) ----------
+   Position is NOT animated here: NavFireflies.jsx writes each dot's
+   `transform` every frame from the spring integrator in
+   src/motion/navFireflyPhysics.js (chase on route change, ambient 2D drift
+   at rest). The only CSS motion left is the opacity shimmer, whose per-dot
+   period/phase (--ff-shimmer / --ff-shimmer-delay) come from the same
+   per-particle traits so no two dots pulse in step.
+
+   --ff-glow (per firefly, NAV_FIREFLIES.glow range) scales the halo: the
+   tight inner shadow is the bright core, the wider one the soft bloom.
+   Dots are positioned by their top-left corner, so the negative margin
+   re-centres each one on its integrated point. */
+.nav-fireflies {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  transition: opacity 200ms ease-out;
+}
+.nav-firefly {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: -1.5px 0 0 -1.5px;
+  border-radius: 999px;
+  background: var(--ff-color, #ffffff);
+  box-shadow:
+    0 0 calc(3px * var(--ff-glow, 1)) calc(0.5px * var(--ff-glow, 1)) var(--ff-color, #ffffff),
+    0 0 calc(9px * var(--ff-glow, 1)) calc(1.5px * var(--ff-glow, 1)) rgba(96, 165, 250, 0.55);
+  opacity: var(--ff-o-max, 1);
+  animation: nav-firefly-shimmer var(--ff-shimmer, 3.6s) ease-in-out infinite;
+  animation-delay: var(--ff-shimmer-delay, 0s);
+  will-change: transform, opacity;
+}
+@keyframes nav-firefly-shimmer {
+  0%,
+  100% {
+    opacity: var(--ff-o-max, 1);
+  }
+  50% {
+    opacity: var(--ff-o-min, 0.3);
+  }
+}
+/* Reduced motion (NAV_FIREFLIES.reducedMotionMs): no spring loop runs — the
+   component places each dot on its rest offset and this short transition
+   carries it there. The shimmer is collapsed by globals.css; pin full
+   opacity so the active page stays clearly marked. */
+.nav-firefly--static {
+  animation: none;
+  opacity: var(--ff-o-max, 1);
+  transition: transform var(--ff-static-ms, 300ms) ease-out;
 }
 
 /* ---------- 15.2 About Me carousel spatial handoff (owner correction pass) ----------
@@ -1037,6 +1108,97 @@
   transform: translate(0, 0) scale(1);
 }
 
+/* ---------- 21b. Contact card hover glow + sheen (owner instruction) ----------
+   Not covered by ANIMATION_SPEC.md/INTERACTION_SPEC.md — CLAUDE.md Section 26
+   priority 1 (explicit owner instruction) applies. Shared by both
+   ContactCards call sites (Home Contact + dedicated Contact page) since both
+   render the same ContactLink.
+
+   Glow lives on the card (`.contact-card`, the <a>/<button> itself, never
+   overflow-hidden) so its box-shadow can bleed outward uncropped; the sheen
+   lives one layer in on `.contact-card-sheen`, an inset:0 absolutely
+   positioned child that owns overflow-hidden + border-radius:inherit — the
+   same wrapper/crop-box split used by .timeline-image-glow and
+   .carousel-active-image, here needed because the glow and the sheen clip
+   can't both live on one element without the clip cutting the glow into a
+   hard rectangle.
+
+   The sheen itself reuses .tag-chip's exact trigger mechanism (an
+   opacity-gated ::before with a `1`-iteration keyframe fired by :hover/
+   :focus-visible starting to match): the animation restarts from its 0% frame
+   every time hover/focus-visible begins, so it always plays exactly once per
+   entry and never loops while the pointer stays inside. No dedicated
+   prefers-reduced-motion rule is needed for the same reason .tag-chip has
+   none: the site-wide reduced-motion override in globals.css already
+   collapses the keyframe and the box-shadow transition to their end state. */
+/* Scale easing (owner motion-polish pass). The scale amount itself is still
+   the shared .btn-external hover (1.04); what was wrong was that this rule's
+   `transition` shorthand silently dropped .btn-external's transform
+   transition, so the card snapped between sizes. A transition takes its
+   timing from the rule of the state being ENTERED, so:
+     - the base rule below owns hover-OUT: 320ms, a plain decelerating curve
+       (no overshoot below 1.0 — that would read as a flinch);
+     - the :hover rule owns hover-IN: 400ms on a curve whose y1 > 1 gives a
+       brief ~1.5% overshoot past 1.04 before settling — spring-like without
+       being rubbery.
+   Reduced motion needs no rule here: globals.css collapses both durations,
+   which also removes the overshoot. */
+.contact-card {
+  transition:
+    transform 320ms cubic-bezier(0.22, 0.9, 0.36, 1),
+    box-shadow 280ms ease-out,
+    border-color 280ms ease-out;
+  box-shadow:
+    0 0 24px 0 rgba(96, 165, 250, 0.06),
+    0 0 8px 0 rgba(96, 165, 250, 0.1);
+}
+.contact-card:hover,
+.contact-card:focus-visible {
+  transition:
+    transform 400ms cubic-bezier(0.34, 1.45, 0.64, 1),
+    box-shadow 280ms ease-out,
+    border-color 280ms ease-out;
+  box-shadow:
+    0 0 42px 2px rgba(96, 165, 250, 0.24),
+    0 0 16px 1px rgba(96, 165, 250, 0.38);
+}
+.contact-card-sheen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.contact-card-sheen::before {
+  content: '';
+  position: absolute;
+  inset: -20% -10%;
+  background: linear-gradient(
+    115deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.65) 50%,
+    rgba(191, 219, 254, 0.4) 58%,
+    transparent 70%
+  );
+  transform: translateX(-130%);
+  opacity: 0;
+}
+.contact-card:hover .contact-card-sheen::before,
+.contact-card:focus-visible .contact-card-sheen::before {
+  opacity: 1;
+  /* 1430ms = 650ms x 2.2 (owner instruction — approximately 2.2x slower
+     than the original approved speed, nothing else about the sweep changed). */
+  animation: contact-card-sheen-sweep 1430ms ease-out 1;
+}
+@keyframes contact-card-sheen-sweep {
+  from {
+    transform: translateX(-130%);
+  }
+  to {
+    transform: translateX(130%);
+  }
+}
+
 /* ================================================================
    22. Achievements Page carousel (ANIMATION_SPEC.md Section 21,
    INTERACTION_SPEC.md Section 22)
@@ -1594,10 +1756,14 @@
 }
 
 /* ---------- 22.1 Toolkit tag pop ----------
-   Mirror image of .exp-tag: the Skills tags reveal RIGHTMOST FIRST and then
-   travel leftward (owner instruction, superseding 22.1's left-to-right
-   ordering), so each tag enters from its right and overshoots slightly to
-   the left — the motion has to run with the sequence, not against it.
+   The Skills tags reveal LEFTMOST FIRST, left to right (owner correction
+   pass, SkillsToolkits.jsx `index * tagStepMs`) — back to 22.1's original
+   left-to-right ordering, superseding an intermediate rightmost-first pass.
+   The per-tag motion itself is an explicitly preserved visual (owner
+   instruction): each tag still enters from its own right and overshoots
+   slightly to the left regardless of sequence direction, so it now runs
+   counter to the reveal order rather than "with" it as the earlier pass
+   described — a deliberate scope boundary, not an oversight.
    Lives on a wrapper span around <Label> so the settled transform can never
    fight .tag-chip's hover scale (same separation .exp-tag uses). */
 .tk-tag {
@@ -1701,5 +1867,343 @@
   100% {
     opacity: 0;
     transform: translateY(var(--lang-line-h, 102px));
+  }
+}
+
+/* ================================================================
+   23. Certificates Page (ANIMATION_SPEC.md Section 23,
+   INTERACTION_SPEC.md Sections 24-25)
+   ================================================================ */
+
+/* ---------- Filter bar reveal (implementation prompt Section 13:
+   title -> subtitle -> filter bar -> grid) ---------- */
+.cert-filter-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 420ms ease-out,
+    transform 420ms ease-out;
+}
+.cert-filter-reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- 23.2 Active filter indicator ----------
+   Sliding underline, measured the same way as Navbar's active-page glow
+   (CertificateFilterBar.jsx). ~200-350ms smooth ease-in-out per spec. */
+.cert-filter-tab {
+  position: relative;
+  padding-bottom: 10px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 500;
+  transition:
+    color 220ms ease-out,
+    text-shadow 220ms ease-out;
+}
+.cert-filter-tab:hover,
+.cert-filter-tab:focus-visible {
+  color: rgba(255, 255, 255, 0.85);
+}
+.cert-filter-tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+}
+.cert-filter-tab-active {
+  color: var(--color-accent);
+  font-weight: 700;
+  text-shadow: 0 0 14px rgba(96, 165, 250, 0.55);
+}
+.cert-filter-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  box-shadow: 0 0 10px 1px rgba(96, 165, 250, 0.7);
+  transition:
+    left 300ms ease-in-out,
+    width 300ms ease-in-out,
+    opacity 200ms ease-out;
+}
+
+/* ---------- 23.2 Grid filtering transition ----------
+   Whole-grid crossfade: matching CertificateGrid.jsx's fade-out -> swap ->
+   fade-in sequence. Fast and restrained per spec — opacity plus a very
+   small settle, never a dramatic card-level fly/rotate/flip. */
+.cert-grid-transition {
+  transition:
+    opacity 220ms ease-out,
+    transform 220ms ease-out;
+}
+.cert-grid-transition-hidden {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* ---------- Certificate card hover ----------
+   Subtle scale + border/glow intensify on the clickable image frame
+   (implementation prompt Section 9: ~1.02-1.04 scale, transform only). Base
+   glow matches the restrained ProjectCardSurface "other" language. */
+.cert-card-media {
+  cursor: zoom-in;
+  box-shadow:
+    0 0 50px 0 rgba(96, 165, 250, 0.08),
+    0 0 16px 0 rgba(96, 165, 250, 0.12);
+  transition:
+    transform 250ms ease-out,
+    border-color 250ms ease-out,
+    box-shadow 250ms ease-out;
+}
+.cert-card-media:hover,
+.cert-card-media:focus-visible {
+  transform: scale(1.03);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 0 70px 2px rgba(96, 165, 250, 0.25),
+    0 0 24px 1px rgba(96, 165, 250, 0.4);
+}
+.cert-card-media:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* ---------- 23.3 Certificate preview lightbox ----------
+   Opening: backdrop fade + certificate scale ~0.85-0.9 -> 1, ~300-450ms
+   ease-out. Closing: its own short exit keyframe (not the open keyframe
+   reversed — same reasoning as .exp-panel-content-close), ~250-400ms,
+   driven by CertificateLightbox.jsx's `closing` state. */
+.cert-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 6, 10, 0.8);
+  backdrop-filter: blur(6px);
+  animation: cert-lightbox-in 320ms ease-out;
+}
+.cert-lightbox-closing {
+  animation: cert-lightbox-out 260ms ease-in forwards;
+}
+@keyframes cert-lightbox-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes cert-lightbox-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.cert-lightbox-frame {
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(8, 11, 18, 0.6);
+  box-shadow:
+    0 0 30px 2px rgba(96, 165, 250, 0.55),
+    0 0 90px 14px rgba(96, 165, 250, 0.3),
+    0 24px 60px rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  animation: cert-lightbox-scale-in 360ms cubic-bezier(0.22, 0.9, 0.32, 1);
+}
+.cert-lightbox-frame-closing {
+  animation: cert-lightbox-scale-out 260ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+@keyframes cert-lightbox-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes cert-lightbox-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+.cert-lightbox-image {
+  display: block;
+  max-width: min(900px, 90vw);
+  max-height: 82vh;
+  width: auto;
+  height: auto;
+  border-radius: 14px;
+  object-fit: contain;
+}
+.cert-lightbox-placeholder {
+  width: min(560px, 90vw);
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.cert-lightbox-close {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  display: flex;
+  height: 40px;
+  width: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(8, 11, 18, 0.92);
+  color: var(--color-foreground);
+  font-size: 22px;
+  line-height: 1;
+  transition:
+    border-color 200ms ease,
+    transform 200ms ease,
+    box-shadow 200ms ease;
+}
+.cert-lightbox-close:hover {
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 16px 1px rgba(96, 165, 250, 0.55);
+  transform: scale(1.06);
+}
+.cert-lightbox-close:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* ================================================================
+   26. Global page time-warp (owner spec + correction pass;
+       timeline in src/motion/pageWarp.js)
+   ================================================================
+   Mental model: ONE centred warp + full-page zoom out + full-page zoom in +
+   a visible, subtly bent Navbar. The streak field is drawn by
+   WarpCanvas.jsx; this block owns the layers and the content motion. */
+
+/* True viewport layer. Fixed and full-screen, above page content, but
+   BELOW the sticky Navbar (z-50): the Navbar stays visible and readable for
+   the whole transition and its translucent, blurred panel shows the streaks
+   passing behind it. The canvas is rendered as a sibling of the shell, so
+   nothing clips it — RootLayout, page max-width, or transformed ancestors.
+   Fireflies and the Navbar glow live inside the header (z-50) and are never
+   covered. */
+.page-warp-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* ---------- Pre-warp: ONE full-page zoom out (PRE_WARP_MS = 180) ----------
+   The current page is one spatial layer receding into depth, with a whisper
+   of blur, on an accelerating curve into the warp. Held through the warp so
+   the page under the cover never pops back before the swap. The origin is
+   the viewport centre in page space (--warp-origin-y) so the recession
+   happens around what is on screen.
+
+   Depth pass: the recession deviation was 0.03 (scale 0.97); the owner asked
+   for ~3x more noticeable zoom depth without shrinking the page into a tiny
+   floating rectangle, so this lands at 0.92 — inside the owner's suggested
+   0.92-0.95 band and close to a literal 3x (0.09) deviation. */
+.warp-stage {
+  transform-origin: 50% var(--warp-origin-y, 50%);
+}
+.warp-stage[data-warp-phase='engage'],
+.warp-stage[data-warp-phase='warp'] {
+  transform: scale(0.92);
+  filter: blur(0.6px);
+  transition:
+    transform 270ms cubic-bezier(0.4, 0, 0.9, 0.4),
+    filter 270ms cubic-bezier(0.4, 0, 0.9, 0.4);
+}
+
+/* ---------- Post-warp: ONE full-page zoom in (ARRIVE_MS = 220) ----------
+   The destination is already rendered, at scrollTop 0, in its normal layout
+   under the cover; as the cover clears it zooms in from slightly receded to
+   scale 1 on a confident ease-out. No fade, no bounce. No transform remains
+   once the phase clears. Matches the pre-warp depth above (0.92 -> 1). */
+.warp-stage[data-warp-phase='arrive'] {
+  animation: warp-arrive 330ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes warp-arrive {
+  from {
+    transform: scale(0.92);
+    filter: blur(0.8px);
+  }
+  to {
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+/* ---------- Navbar bend ----------
+   The Navbar never disappears; instead spacetime distorts around it. Pinned
+   at its top edge, it tilts a few degrees into depth and compresses a hair
+   through the core warp, then returns as the destination arrives. Small
+   enough that every label stays crisp and readable; the fireflies ride the
+   same transform, so they keep chasing the destination item inside it. */
+.site-header {
+  transform-origin: 50% 0;
+  transition: transform 630ms cubic-bezier(0.4, 0, 0.6, 1);
+}
+/* Curvature pass #3 (correction — dial back #2): measured the same way as
+   the previous pass, with the same live-browser corner-marker harness
+   (top-edge-width vs bottom-edge-width taper). Previous peak
+   (perspective(480px) rotateX(31deg) scale(0.905)) measured ~7.0% taper —
+   too strong. Target was that value / 1.5 = ~4.7%; perspective(600px)
+   rotateX(25deg) scale(0.93) measured ~4.6% (ratio 0.66 against the
+   previous peak), landing on target. Lengthening the perspective distance
+   together with a smaller rotation is what pulls the curvature back
+   down — perspective alone doesn't scale it linearly, same as when it was
+   increased. Engage stays proportioned the same way it already was
+   (~0.42x of peak). Transition durations are untouched — only the amount
+   of bend changed, not its timing. */
+.site-header[data-warp-phase='engage'] {
+  transform: perspective(600px) rotateX(10.5deg) scale(0.97);
+}
+.site-header[data-warp-phase='warp'] {
+  transform: perspective(600px) rotateX(25deg) scale(0.93);
+}
+.site-header[data-warp-phase='arrive'] {
+  transform: perspective(600px) rotateX(0deg) scale(1);
+  transition: transform 480ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---------- Reduced motion ----------
+   No canvas, no depth, no Navbar bend: a quick crossfade around the same
+   route swap (REDUCED in pageWarp.js). The global reduced-motion override
+   collapses these durations further still; the class hand-off keeps the
+   swap invisible either way. */
+.warp-stage[data-warp-phase='reduced-out'] {
+  opacity: 0;
+  transition: opacity 140ms ease-in;
+}
+.warp-stage[data-warp-phase='reduced-in'] {
+  animation: warp-reduced-in 200ms ease-out both;
+}
+@keyframes warp-reduced-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-header[data-warp-phase] {
+    transform: none;
   }
 }

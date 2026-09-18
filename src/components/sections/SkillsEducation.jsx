@@ -1,6 +1,5 @@
 import { educationMilestones } from '../../data/skills'
 import { SKILLS_MOTION, railProgressAt } from '../../motion/skillsMotion'
-import { useScrollReveal } from '../../hooks/useScrollReveal'
 
 const { titleToRailMs, railMs, titleOffsetMs, dateOffsetMs, panelOffsetMs } = SKILLS_MOTION.education
 
@@ -25,16 +24,21 @@ const nodeDelayMs = (index) =>
  * rather than four separate events.
  *
  * MEASURED from docs/figma-reference/skills/SkillsPage.png at the 1440px
- * reference: a 1332px band with the rail inset ~67px at each end (the 5%
- * --edu-rail-inset), three checkpoints on equal column centres 444px apart,
- * 24px bold institutions over 14px dates, and 198x62px information panels
- * 22px below the rail.
+ * reference: rail inset 5% of the band width (--edu-rail-inset) regardless of
+ * checkpoint count, 24px bold institutions over 14px dates, and 198x62px
+ * information panels 22px below the rail. The band itself no longer has a
+ * fixed 1332px width: since the owner's Industry/Corporate removal this
+ * section shares a row with Language (SkillsEducationLanguage.jsx), so its
+ * width now comes from that row's grid column instead of the page.
+ *
+ * `isVisible` is owned by SkillsEducationLanguage.jsx, not this component —
+ * the owner's instruction is that Education and Language start their reveal
+ * sequences from one shared viewport trigger, so there is a single
+ * IntersectionObserver one level up instead of two independent ones.
  */
-export default function SkillsEducation() {
-  const { ref, isVisible } = useScrollReveal({ threshold: 0.15 })
-
+export default function SkillsEducation({ isVisible }) {
   return (
-    <section ref={ref} aria-labelledby="education-heading" className="mx-auto mt-[68px] w-full max-w-[1380px] px-6">
+    <section aria-labelledby="education-heading" className="w-full">
       <h2
         id="education-heading"
         className={`skill-wipe ${isVisible ? 'skill-wipe-visible' : ''} mx-auto w-fit text-h2 font-sans text-foreground`}
@@ -47,17 +51,17 @@ export default function SkillsEducation() {
           cancel its glow padding, and two competing margin-tops collide. */}
       <div className="mt-[82px]">
         {/*
-          Figma gives the timeline one fixed horizontal 3-column composition
-          and no mobile variant. Rather than crush three columns into phone
-          width it keeps its proportions and scrolls inside its own container
-          below `sm` — the same conservative translation (and the same reason
-          for the py/-my pair: a non-visible overflow-x forces overflow-y to
+          Figma gives the timeline a fixed horizontal composition and no
+          mobile variant. Rather than crush two columns into phone width it
+          keeps its proportions and scrolls inside its own container below
+          `sm` — the same conservative translation (and the same reason for
+          the py/-my pair: a non-visible overflow-x forces overflow-y to
           match, which would otherwise clip the nodes' glow) already used by
           the Home Experience timeline.
         */}
         <div className="-mx-6 -my-16 overflow-x-auto px-6 py-16 sm:mx-0 sm:my-0 sm:overflow-visible sm:px-0 sm:py-0">
           <div
-            className="mx-auto grid min-w-[680px] max-w-[1332px] grid-cols-3 sm:min-w-0"
+            className="mx-auto grid min-w-[460px] max-w-[520px] grid-cols-2 sm:min-w-0"
             style={{ gridTemplateRows: 'auto 14px auto' }}
           >
             <div className="edu-rail-track col-span-full row-start-2 h-[2px] self-center">
