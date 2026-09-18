@@ -6,7 +6,6 @@ import GameProjects from './pages/GameProjects'
 import AIProjects from './pages/AIProjects'
 import Experiences from './pages/Experiences'
 import Achievements from './pages/Achievements'
-import Skills from './pages/Skills'
 import Certificates from './pages/Certificates'
 import Contact from './pages/Contact'
 import NotFound from './pages/NotFound'
@@ -26,7 +25,6 @@ function App() {
         <Route path="/projects/ai" element={<AIProjects />} />
         <Route path="/experiences" element={<Experiences />} />
         <Route path="/achievements" element={<Achievements />} />
-        <Route path="/skills" element={<Skills />} />
         <Route path="/certificates" element={<Certificates />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />

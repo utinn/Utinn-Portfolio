@@ -8,7 +8,6 @@ export const primaryNavItems = [
   { label: 'Projects', path: '/projects' },
   { label: 'Experiences', path: '/experiences' },
   { label: 'Achievements', path: '/achievements' },
-  { label: 'Skills', path: '/skills' },
   { label: 'Certificates', path: '/certificates' },
   { label: 'Contact', path: '/contact' },
 ]
