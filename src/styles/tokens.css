@@ -1,19 +1,12 @@
-/*
- * Global design tokens confirmed in CLAUDE.md (Sections 5 & 6).
- * These are the ONLY values currently confirmed as global references.
- * Do not add page- or component-specific values here — inspect Figma
- * per-section instead and override locally when a component's actual
- * measurements differ from these fallback tokens.
- */
+
 
 @theme {
-  /* Verified Global Design Direction (CLAUDE.md Section 5) */
+  
   --color-background: #080b12;
   --color-accent: #60a5fa;
   --color-foreground: #ffffff;
 
-  /* Provisional — not yet confirmed via Figma MCP. Visually approximated
-     from docs/figma-reference/home/*.png; verify exact values later. */
+  
   --color-muted: #a3adc2;
   --color-panel: #0d1220;
   --color-border: rgba(148, 163, 195, 0.28);
@@ -22,51 +15,41 @@
 
   --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
 
-  /* Typography scale (CLAUDE.md Section 6) — fallback tokens only.
-     Always prefer the actual Figma component's values when implementing
-     a specific section; H3 has no confirmed global value ("follow Figma"). */
-  --text-display: 4rem; /* 64px */
+  
+  --text-display: 4rem; 
   --text-display--line-height: 1.1;
   --text-display--font-weight: 700;
 
-  --text-h1: 3rem; /* 48px */
+  --text-h1: 3rem; 
   --text-h1--line-height: 1.15;
   --text-h1--font-weight: 700;
 
-  --text-h2: 2.25rem; /* 36px */
+  --text-h2: 2.25rem; 
   --text-h2--line-height: 1.2;
   --text-h2--font-weight: 700;
 
-  --text-body-lg: 1.125rem; /* 18px */
+  --text-body-lg: 1.125rem; 
   --text-body-lg--line-height: 1.5;
   --text-body-lg--font-weight: 400;
 
-  --text-body: 1rem; /* 16px */
+  --text-body: 1rem; 
   --text-body--line-height: 1.5;
   --text-body--font-weight: 400;
 
-  --text-caption: 0.875rem; /* 14px */
+  --text-caption: 0.875rem; 
   --text-caption--line-height: 1.4;
   --text-caption--font-weight: 500;
 
-  /* Provisional shared radii — visually approximated from the Figma
-     reference PNGs, verify exact values via Figma MCP later. Declared under
-     @theme so Tailwind also generates rounded-card / rounded-pill utilities. */
+  
   --radius-card: 1.25rem;
   --radius-pill: 999px;
 }
 
-/* Primary desktop design reference width (CLAUDE.md Section 5). Plain
-   custom property (not a Tailwind theme namespace) consumed by PageContainer. */
+
 :root {
   --desktop-width: 1440px;
 
-  /* Category pages' return curtain. Visible width and hit area are separate:
-     the edge must read as a slim atmospheric band, but the link around it
-     still has to be a comfortable target on touch. Single source of truth for
-     both — the curtain, its gradient body, and the page content's padding all
-     read these (src/styles/curtains.css,
-     components/sections/ProjectCategoryStage.jsx). */
+  
   --return-curtain-w: clamp(16px, 1.8vw, 30px);
   --return-curtain-hit: clamp(56px, 6vw, 96px);
 }

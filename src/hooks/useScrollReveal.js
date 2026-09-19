@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { usePrefersReducedMotion } from './usePrefersReducedMotion'
 
-/**
- * Drives the Home Page Section Reveal Behavior (ANIMATION_SPEC.md Section
- * 14): fires once, ~15-25% into the viewport, and never re-hides once shown
- * so scrolling up/down doesn't replay it.
- */
 export function useScrollReveal({ threshold = 0.2 } = {}) {
   const ref = useRef(null)
   const [isVisible, setIsVisible] = useState(false)

@@ -3,17 +3,6 @@ import ContactCards from '../components/sections/ContactCards'
 import PageContainer from '../components/layout/PageContainer'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
-/**
- * Dedicated Contact page (CLAUDE.md Section 9). No dedicated Figma frame
- * exists for this page — only docs/figma-reference/home/Home_Contact.png —
- * so per the project owner's explicit instruction this page reuses the Home
- * Contact section's card design, data, and reveal animation verbatim via
- * ContactCards, wrapped in its own page-level title/caption (the same
- * "page title + reused section" composition already used by
- * src/pages/Experiences.jsx, Achievements.jsx, and Skills.jsx). The caption
- * copy is reused from Home Contact rather than invented, since no dedicated
- * wording exists for this page (CLAUDE.md Section 23).
- */
 export default function Contact() {
   const { ref, isVisible } = useScrollReveal()
 

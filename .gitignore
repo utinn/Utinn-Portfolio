@@ -43,6 +43,8 @@ docs/
 .cache/
 coverage/
 
+src/assets/images/certificate-thumbnails/
+
 *.tmp
 *.temp
 *.swp

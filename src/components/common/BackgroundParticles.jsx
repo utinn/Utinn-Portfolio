@@ -1,16 +1,3 @@
-/**
- * Reusable ambient background particle layer (CLAUDE.md Section 5 & 10).
- * Implemented as a single tiled radial-gradient layer rather than dozens of
- * individual dot elements (CLAUDE.md Section 18 performance guidance).
- *
- * The tile's dot positions/opacities are a provisional visual approximation
- * of the scattered field seen in the Figma reference PNGs (exact density
- * and composition were not measurable without Figma MCP — verify later).
- *
- * Continuous top-left -> bottom-right drift is defined in
- * ANIMATION_SPEC.md Section 11; the drift distance below matches the tile
- * size exactly so the loop is seamless.
- */
 const TILE_SIZE = 260
 
 const DOT_LAYERS = [

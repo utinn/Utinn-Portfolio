@@ -1,30 +1,7 @@
 import { contactInfo } from '../../data/contact'
 
-// Slight per-quadrant stagger on top of the shared header lead, so the four
-// cards feel like they converge together rather than snapping in as one.
 const QUADRANT_STAGGER_MS = { nw: 0, ne: 70, sw: 70, se: 140 }
 
-/**
- * The four contact destination cards (email/Instagram/GitHub/LinkedIn),
- * extracted from the Home Contact section so the Home preview and the
- * dedicated Contact page (src/pages/Contact.jsx) render the exact same card
- * design, data, and quadrant reveal animation instead of duplicating either
- * (CLAUDE.md Section 10).
- *
- * `revealed`/`startDelayMs` mirror the SkillsToolkits `startDelayMs`
- * convention: the caller owns its own useScrollReveal() and tells this
- * component when its entrance clock starts, so the header -> cards cascade
- * (ANIMATION_SPEC.md Section 21) works identically regardless of which page
- * hosts it.
- *
- * Hover polish (owner instruction, not covered by ANIMATION_SPEC.md/
- * INTERACTION_SPEC.md): each `ContactLink` card carries the shared
- * `.contact-card` blue-glow-on-hover/focus-visible treatment plus a one-shot
- * `.contact-card-sheen` sweep — same trigger mechanism as the approved
- * `.tag-chip` shine (animations.css), so it plays once per hover/focus entry
- * and never loops while hovered. Defined once here so both the Home preview
- * and the dedicated Contact page inherit identical behavior automatically.
- */
 export default function ContactCards({ revealed, startDelayMs = 0 }) {
   const quadrant = (corner) => ({
     className: `contact-card-reveal contact-card-reveal-${corner} ${revealed ? 'contact-card-reveal-visible' : ''}`,

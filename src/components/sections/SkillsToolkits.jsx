@@ -6,7 +6,6 @@ import Label from '../common/Label'
 
 const { rowsStartMs, rowStepMs, frameOffsetMs, tagsOffsetMs, tagStepMs } = SKILLS_MOTION.toolkits
 
-/** Figma draws two groups per row; the flat data list is chunked to match. */
 const GROUPS_PER_ROW = 2
 
 const toRows = (groups) =>
@@ -16,20 +15,6 @@ const toRows = (groups) =>
     return rows
   }, [])
 
-/**
- * One toolkit group: category title -> frame -> tags, left to right.
- *
- * All three stages share the row's single delay so the pair of cards in a row
- * moves as one unit, which is what makes the "2 cards + 2 cards + 2 cards +
- * 2 cards" cadence legible (owner instruction / 22.1 "Group Coordination").
- *
- * Tag order follows Figma's left-to-right array directly (`index *
- * tagStepMs`, owner correction pass — supersedes an earlier rightmost-first
- * pass), so the DOM, the reveal order, the reading order and the
- * accessibility tree all stay in Figma's order (22.1's left-to-right
- * stagger).
- */
-/** Starts the section's shared clock once, at the moment it is first needed. */
 function startClock(clock, startDelayMs) {
   if (clock.current === null) clock.current = Date.now() + startDelayMs
 }
@@ -72,29 +57,6 @@ function ToolkitGroup({ group, revealed, delayMs, onTagAnimationEnd }) {
   )
 }
 
-/**
- * One row of the 2-column grid, and the unit the whole section staggers by.
- *
- * The row owns its own scroll reveal rather than inheriting the section's:
- * the four rows are ~620px tall in total, so the lower ones are below the
- * fold on a laptop and a section-wide trigger would play them to an empty
- * screen. remainingDelayMs() keeps the intended cadence for whatever is
- * already on screen (row 2 still waits its turn behind row 1) while a row
- * the reader only reaches later plays as soon as it arrives.
- *
- * The delay is latched on the row's first reveal — it feeds a CSS
- * transition-delay, and recomputing it mid-flight would restart the row.
- * Whichever of the section or its first row is revealed first starts the
- * shared clock, so the cadence does not depend on which observer React
- * happens to flush first.
- *
- * `onRowComplete` (last row only, owner instruction — Education/Language must
- * gate on the REAL end of Toolkits, not an estimated timeout) fires once the
- * final tag of the final row finishes its own `tk-tag-pop` animation. Every
- * tag in the row reports its own `animationend`; the row counts them against
- * its own tag total rather than guessing which tag happens to be staggered
- * last, so it stays correct even if a group's tag count changes later.
- */
 function ToolkitRow({ groups, rowIndex, sectionClock, startDelayMs, isLastRow, onRowComplete }) {
   const { ref, isVisible } = useScrollReveal({ threshold: 0.25 })
   const delayRef = useRef(null)
@@ -133,24 +95,6 @@ function ToolkitRow({ groups, rowIndex, sectionClock, startDelayMs, isLastRow, o
   )
 }
 
-/**
- * Toolkits section of the Skills and Credentials Page.
- *
- * MEASURED from docs/figma-reference/skills/SkillsPage.png at the 1440px
- * reference: a 1148px content column split into two 546px columns 56px
- * apart, each group being a 24px bold title over a 78px frame, and 34px
- * between one row's frame and the next row's title.
- *
- * `startDelayMs` is the page header cascade — this section is on screen at
- * load, so its title has to wait for "Skills" and its caption rather than
- * racing them.
- *
- * `onComplete` (owner instruction) fires once, the moment the actual last
- * row's actual last tag finishes animating — see ToolkitRow. Education +
- * Language (SkillsEducationLanguage.jsx) gate their own reveal on this so the
- * page reads as one ordered sequence instead of two independently-triggered
- * sections, without ever blocking scroll.
- */
 export default function SkillsToolkits({ startDelayMs = 0, onComplete }) {
   const { ref, isVisible } = useScrollReveal({ threshold: 0.05 })
   const sectionClock = useRef(null)

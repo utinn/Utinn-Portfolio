@@ -8,53 +8,23 @@ const SWIPE_THRESHOLD_PX = 40
 
 const wrap = (i) => ((i % items.length) + items.length) % items.length
 
-// Entrance reel: a whole number of revolutions, so the reel mathematically
-// cannot land anywhere but slide 1 regardless of how many slides exist.
 const SPIN_STEPS = items.length * 2
 const SPIN_FAST_MS = 70
 const SPIN_SLOW_MS = 250
 const SPIN_EASE = 2.2
 
-/**
- * Per-step durations for the entrance reel: each step both animates for and
- * waits this long, so the reel visibly decelerates (70ms -> 250ms) before a
- * final full-length settle onto slide 1. Total ≈ 1.5s.
- */
 const spinDurations = Array.from({ length: SPIN_STEPS }, (_, step) =>
   step === SPIN_STEPS - 1
     ? TRANSITION_MS
     : Math.round(SPIN_FAST_MS + (SPIN_SLOW_MS - SPIN_FAST_MS) * (step / (SPIN_STEPS - 1)) ** SPIN_EASE),
 )
 
-/**
- * Signed, shortest-path distance of item `i` from `activeIndex` (0 = active,
- * ±1 = side preview, ±2 = off-stage). With 5 items this covers every item
- * exactly once, so the whole carousel can be rendered as one continuously
- * positioned stage instead of three fixed slots with swapped content.
- */
 const getOffset = (i, activeIndex, length) => {
   const half = Math.floor(length / 2)
   const raw = ((i - activeIndex) % length + length) % length
   return raw > half ? raw - length : raw
 }
 
-/**
- * About Me image carousel (ANIMATION_SPEC.md 15, INTERACTION_SPEC.md 9).
- * Manual-only, no autoplay, previous/next arrows + indicator dots + keyboard
- * + mandatory mobile swipe, infinite looping, captions synchronized to the
- * active image. A short transition lock prevents rapid input from
- * corrupting state (15.6/9.11).
- *
- * Spatial handoff (owner correction pass): every slide is rendered at once
- * as an absolutely-positioned "card" whose transform/opacity is driven
- * purely by its offset from the active index (see .carousel-card in
- * animations.css). Navigating only changes `index` — each card's offset
- * (and therefore its CSS transition target) updates accordingly, so the
- * browser animates every card between its old and new position in one
- * continuous motion: the outgoing active card shrinks into the side-preview
- * slot while the incoming preview grows into center, rather than swapping
- * content in place.
- */
 export default function AboutMeCarousel({ startEntrance = true }) {
   const [index, setIndex] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -67,12 +37,6 @@ export default function AboutMeCarousel({ startEntrance = true }) {
 
   const hasSettledRef = useRef(false)
 
-  // Quick fade-out/in for the caption text only (the image handoff animates
-  // itself via the offset-driven CSS above). Two-step class flip so the
-  // browser registers the hidden state before transitioning back to visible.
-  // Guarded by hasSettledRef so this ordinary crossfade never runs during the
-  // entrance reel or its one-time settle reveal (see below) — only for real
-  // manual navigation afterwards.
   useEffect(() => {
     if (prefersReducedMotion || !hasSettledRef.current) return undefined
     setCaptionVisible(false)
@@ -82,11 +46,6 @@ export default function AboutMeCarousel({ startEntrance = true }) {
 
   useEffect(() => () => clearTimeout(lockTimeoutRef.current), [])
 
-  // Entrance reel (owner correction pass): once the section header cascade
-  // has played, cycle rapidly through the slides and decelerate onto slide 1,
-  // then hand control back to normal manual navigation. Runs at most once —
-  // there is no autoplay after it settles. Reduced motion skips straight to
-  // slide 1 with no cycling.
   useEffect(() => {
     if (!startEntrance || entranceDone) return undefined
     if (prefersReducedMotion) {
@@ -98,10 +57,6 @@ export default function AboutMeCarousel({ startEntrance = true }) {
     let step = 0
     let timeoutId
 
-    // The index is set absolutely from the step counter rather than
-    // incremented from the previous value, so the reel replays identically if
-    // this effect is ever re-run (React StrictMode double-invokes it in dev)
-    // and always lands on wrap(SPIN_STEPS) === slide 1.
     const advance = () => {
       const duration = spinDurations[step]
       step += 1
@@ -174,9 +129,6 @@ export default function AboutMeCarousel({ startEntrance = true }) {
           className="btn-external flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/25 text-foreground hover:border-white/50 sm:h-12 sm:w-12"
           aria-label="Previous About Me image"
         >
-          {/* Flip lives on this wrapper, not the animated arrow span itself —
-              the hover nudge animation also sets `transform`, so putting
-              both on one element would fight over it. */}
           <span aria-hidden="true" className="inline-block" style={{ transform: 'scaleX(-1)' }}>
             <span className="btn-external__arrow">&gt;</span>
           </span>
@@ -223,13 +175,6 @@ export default function AboutMeCarousel({ startEntrance = true }) {
         </button>
       </div>
 
-      {/* Nested reveal: the outer .carousel-caption crossfade (opacity only)
-          runs the ordinary per-navigation transition; the inner
-          .carousel-text-reveal wrappers play once, when the entrance reel
-          settles, adding the translateY "rises into place" motion. Until the
-          reel settles the inner wrappers stay at opacity 0, so title/caption
-          are fully hidden during the rapid spin regardless of the outer
-          crossfade's (irrelevant, guarded-off) state. */}
       {(activeItem.title || activeItem.caption) && (
         <div
           className={`carousel-caption ${captionVisible ? 'carousel-caption-visible' : 'carousel-caption-hidden'} mx-auto mt-6 max-w-2xl text-center`}

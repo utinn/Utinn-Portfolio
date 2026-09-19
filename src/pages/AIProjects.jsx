@@ -5,19 +5,11 @@ import ProjectSummaryCard from '../components/sections/ProjectSummaryCard'
 import ProjectsSection from '../components/sections/ProjectsSection'
 import { featuredProjectsIn, otherProjectsIn } from '../data/projects'
 
-/** Stagger between related-project cards (ANIMATION_SPEC.md Section 8). */
 const GRID_STAGGER_MS = 90
 
 const featuredProjects = featuredProjectsIn('ai')
 const relatedProjects = otherProjectsIn('ai')
 
-/**
- * AI Projects page (child view of Projects — INTERACTION_SPEC.md Section 15),
- * composed from docs/figma-reference/projects/AiProjectsPage.png: shared page
- * header, two large featured cards, then a 2-column grid of related projects.
- * The return curtain on the left and the page's clearance from it are supplied
- * by ProjectCategoryStage.
- */
 export default function AIProjects() {
   return (
     <ProjectCategoryStage category="ai">

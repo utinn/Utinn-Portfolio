@@ -5,15 +5,6 @@ import SectionHeader, { SECTION_CONTENT_DELAY_MS } from '../common/SectionHeader
 import PageContainer from '../layout/PageContainer'
 import AboutMeCarousel from './AboutMeCarousel'
 
-/**
- * Home About Me section (CLAUDE.md Section 9). Heading and body copy are
- * transcribed verbatim, including its small grammatical quirks, from the
- * approved Figma reference (docs/figma-reference/home/Home_AboutMe.png) —
- * not rewritten (CLAUDE.md Section 23).
- *
- * Entrance (owner correction pass): title rises -> caption rises -> the
- * carousel runs its entrance reel (ANIMATION_SPEC.md Section 14/15).
- */
 export default function AboutMe() {
   const { ref, isVisible } = useScrollReveal()
   const prefersReducedMotion = usePrefersReducedMotion()

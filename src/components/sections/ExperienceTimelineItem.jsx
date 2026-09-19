@@ -2,66 +2,23 @@ import { useEffect, useRef, useState } from 'react'
 import Label from '../common/Label'
 import ExperienceSupportingImage from './ExperienceSupportingImage'
 
-/**
- * Expand sequence (ANIMATION_SPEC.md 20.3 / 20.6-20.8, reordered by the
- * owner: organisation and date now live in the collapsed header, so opening a
- * group starts at the tags).
- *
- *   tags, one by one  ->  branch lines draw  ->  key points slide in, each
- *   after its own branch  ->  supporting image last
- *
- * 20.7 is the hard constraint in there: a key point may never appear before
- * the branch line that connects it to the rail, so each point's delay is
- * derived from its branch rather than set independently.
- */
 const TAG_BASE_MS = 40
 const TAG_STEP_MS = 70
 const BRANCH_BASE_MS = 260
 const BRANCH_STEP_MS = 140
 const BRANCH_TO_POINT_MS = 110
-/** Small overlap once the last point has started, not after it finishes — 20.9 allows overlap for smoothness. */
 const POINT_TO_FIGURE_GAP_MS = 90
 
-/** Node -> title -> organisation + date, once the rail reaches this entry. */
 const NODE_TO_TITLE_MS = 130
 const TITLE_TO_META_MS = 130
 
-/** Must match .exp-panel-content-closing's animation-duration in animations.css. */
 const PANEL_CONTENT_CLOSE_MS = 160
-/**
- * How long the staged tags/branches/points/image stay mounted after closing.
- * Must be >= .exp-panel's own close grid-template-rows duration (280ms) so
- * the collapse keeps sizing against real content the whole way down instead
- * of snapping to zero the instant the content unmounts.
- */
 const DETAIL_CONTENT_UNMOUNT_MS = 300
 
-/**
- * One collapsible experience on the dedicated Experiences Page.
- *
- * Collapsed it shows only the node, title and organisation • date
- * (INTERACTION_SPEC.md 17.1); the tags, key points and supporting image stay
- * hidden until the user opens it. Opening/closing is owned by the parent so
- * only one entry can be open at a time.
- *
- * Layout note: the article has no left padding of its own. Each block sets
- * its own offset from the rail instead, because the branch lines have to
- * start ~10px from the rail while the header and tags start ~38px from it —
- * a single shared padding could not do both, and negative offsets would be
- * cut off by the panel's overflow clip.
- */
 export default function ExperienceTimelineItem({ experience, isOpen, onToggle, revealed, nodeDelayMs }) {
   const panelId = `experience-panel-${experience.id}`
   const revealClass = revealed ? 'exp-reveal-visible' : ''
 
-  // Drives the panel content's brief "compression" keyframe on close (a plain
-  // CSS transition can't pick this up on its own here — removing the open
-  // keyframe animation snaps the transform straight to its resting value
-  // instead of transitioning to it, verified in-browser), keeps the staged
-  // tags/branches/points/image mounted a little past close so the panel's
-  // collapse still has real content to size against, and bumps cycleKey on
-  // every open so that block always remounts from a true initial state even
-  // if a rapid reopen lands before the unmount timer below ever fires.
   const [isClosing, setIsClosing] = useState(false)
   const [showDetail, setShowDetail] = useState(isOpen)
   const [cycleKey, setCycleKey] = useState(0)
@@ -126,19 +83,9 @@ export default function ExperienceTimelineItem({ experience, isOpen, onToggle, r
         </p>
       </div>
 
-      {/* The panel is widened by -mx-12 and the padding put back on the inner
-          content, so the clipping box (overflow-hidden, unavoidable — it is
-          what makes the 0fr -> 1fr animation clip its content) sits 48px
-          outside the column and the supporting image's glow has somewhere to
-          bloom instead of ending on a hard vertical edge. */}
       <div id={panelId} inert={!isOpen} className={`exp-panel -mx-12 ${isOpen ? 'exp-panel-open' : ''}`}>
         <div className={`exp-panel-content ${isClosing ? 'exp-panel-content-closing' : ''}`}>
           <div className="px-12">
-            {/* Mounted only while open (plus a short unmount grace so the panel's
-                own collapse still has real content to size against) and keyed
-                per open cycle — see the reset-lifecycle note on .exp-tag etc. in
-                animations.css. A freshly mounted element can't already be sitting
-                at its revealed state, so every open replays this from scratch. */}
             {showDetail && (
               <div key={cycleKey}>
                 <div className="flex flex-wrap gap-2.5 pt-3.5 pl-8 sm:pl-[38px]">

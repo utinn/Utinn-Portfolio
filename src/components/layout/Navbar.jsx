@@ -1,36 +1,39 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
+import cvFile from '../../assets/Justin Christian Woeryadi_CV.pdf'
 import { primaryNavItems, projectsChildPaths } from '../../data/navigation'
 import { usePageWarp } from '../../hooks/usePageWarp'
+import { CV_FIREFLIES } from '../../motion/navFireflyPhysics'
 import NavFireflies from './NavFireflies'
 import PageContainer from './PageContainer'
 
-// TODO: place the real CV file at public/Navbar_CV.pdf (CLAUDE.md owner
-// clarification 6 — semantic navigation filename, not Certificate_CV.pdf).
-const CV_HREF = '/Navbar_CV.pdf'
+const CV_DOWNLOAD_FILENAME = 'Justin-Christian-Woeryadi-CV.pdf'
 
-/**
- * Reusable floating/pill-style primary navigation (CLAUDE.md Section 10).
- * Order + active-state rules: INTERACTION_SPEC.md Section 5. Visual shape,
- * spacing, and colors are approximated from the Figma reference PNGs and
- * provisional pending Figma MCP verification.
- *
- * The active indicator is a single measured box that slides to the active
- * NavLink's position (ANIMATION_SPEC.md Section 25.1) rather than every item
- * owning its own static highlight. Owner redesign: the old flat blue pill is
- * gone — the box now carries only a faint aura, and the NavFireflies cloud
- * sits beside it at the <ul> level, receiving the same measurement as its
- * chase target (motion-polish pass: each firefly springs to the new item on
- * its own, rather than riding the sliding box as a rigid group).
- */
+function DownloadIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0">
+      <path
+        d="M12 3v12m0 0-4-4m4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 export default function Navbar() {
   const { pathname } = useLocation()
   const { pendingPath, warp } = usePageWarp()
   const isProjectsActive = pathname === '/projects' || projectsChildPaths.includes(pathname)
-  // The indicator (aura + fireflies) points at the route being warped TO
-  // from the moment of the click, so the fireflies chase during pre-warp
-  // and are settled around the new item when the destination arrives.
-  // aria-current stays on the real route until the swap.
   const indicatorPath = pendingPath ?? pathname
   const activePath =
     indicatorPath === '/projects' || projectsChildPaths.includes(indicatorPath) ? '/projects' : indicatorPath
@@ -40,9 +43,6 @@ export default function Navbar() {
   const [activeBox, setActiveBox] = useState(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  // Measures the active NavLink's box (in the <ul>'s space) to drive both the
-  // sliding aura and the fireflies' chase target — an external-layout sync,
-  // so setState here (not derived during render) is intentional.
   const measureGlow = useCallback(() => {
     const activeEl = itemRefs.current[activePath]
     const listEl = listRef.current
@@ -58,8 +58,6 @@ export default function Navbar() {
       width: itemRect.width,
       height: itemRect.height,
     }
-    // Keep the previous object when nothing moved, so observer callbacks
-    // that re-measure identical geometry don't retarget the fireflies.
     setActiveBox((prev) =>
       prev &&
       Math.abs(prev.left - next.left) < 0.5 &&
@@ -73,8 +71,6 @@ export default function Navbar() {
 
   const glowStyle = activeBox ? { opacity: 1, left: activeBox.left, width: activeBox.width } : { opacity: 0 }
 
-  // Stable object per measurement so NavFireflies only retargets on a real
-  // change, never on an unrelated Navbar re-render.
   const fireflyTarget = useMemo(
     () =>
       activeBox
@@ -92,12 +88,6 @@ export default function Navbar() {
     measureGlow()
   }, [measureGlow])
 
-  // Re-measure whenever the list's geometry changes — not just on window
-  // resize. The initial layout-effect measurement runs before Space Grotesk
-  // has loaded, and the fallback font is narrower, so every item's left edge
-  // shifts once the webfont swaps in (the old pill silently sat ~30px left of
-  // its label until the next resize). ResizeObserver catches the swap and any
-  // other reflow; fonts.ready covers the swap explicitly as well.
   useEffect(() => {
     window.addEventListener('resize', measureGlow)
     const listEl = listRef.current
@@ -117,9 +107,19 @@ export default function Navbar() {
     setIsMenuOpen(false)
   }, [pathname])
 
+  const cvRef = useRef(null)
+  const [cvActive, setCvActive] = useState(false)
+  const [cvBox, setCvBox] = useState(null)
+  const activateCv = useCallback(() => {
+    const el = cvRef.current
+    if (!el) return
+    setCvBox({ x: el.offsetWidth / 2, y: el.offsetHeight / 2, w: el.offsetWidth, h: el.offsetHeight })
+    setCvActive(true)
+  }, [])
+  const deactivateCv = useCallback(() => setCvActive(false), [])
+  const cvTarget = cvActive ? cvBox : null
+
   return (
-    // data-warp-phase drives the Navbar's subtle spacetime bend during the
-    // global warp (animations.css "26"); the header stays visible throughout.
     <header className="site-header sticky top-4 z-50 md:top-6" data-warp-phase={warp?.phase}>
       <PageContainer>
         <nav
@@ -130,7 +130,7 @@ export default function Navbar() {
             Utinn
           </Link>
 
-          <ul ref={listRef} className="relative hidden items-center gap-1 lg:flex">
+          <ul ref={listRef} className="relative hidden items-center gap-2 lg:flex xl:gap-3">
             <span aria-hidden="true" className="nav-active-glow absolute inset-y-0 my-1 rounded-full" style={glowStyle}>
               <span className="nav-active-aura" />
             </span>
@@ -158,12 +158,19 @@ export default function Navbar() {
           </ul>
 
           <a
-            href={CV_HREF}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-external hidden shrink-0 rounded-full border border-white/25 bg-white/5 px-5 py-2 text-body font-medium text-foreground transition-colors hover:border-white/50 lg:inline-flex"
+            ref={cvRef}
+            href={cvFile}
+            download={CV_DOWNLOAD_FILENAME}
+            aria-label="Download CV"
+            onMouseEnter={activateCv}
+            onMouseLeave={deactivateCv}
+            onFocus={activateCv}
+            onBlur={deactivateCv}
+            className="cv-btn btn-external relative hidden shrink-0 items-center gap-1.5 rounded-full border border-white/25 bg-white/5 px-5 py-2 text-body font-medium text-foreground hover:border-white/50 lg:inline-flex"
           >
+            <DownloadIcon />
             CV
+            <NavFireflies target={cvTarget} seed={4271} config={CV_FIREFLIES} />
           </a>
 
           <button
@@ -208,11 +215,12 @@ export default function Navbar() {
             })}
             <li>
               <a
-                href={CV_HREF}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-2xl border border-white/20 px-4 py-3 text-center text-body font-medium text-foreground"
+                href={cvFile}
+                download={CV_DOWNLOAD_FILENAME}
+                aria-label="Download CV"
+                className="flex items-center justify-center gap-1.5 rounded-2xl border border-white/20 px-4 py-3 text-body font-medium text-foreground"
               >
+                <DownloadIcon />
                 CV
               </a>
             </li>

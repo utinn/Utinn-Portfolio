@@ -1,17 +1,3 @@
-/*
- * Home page motion primitives (ANIMATION_SPEC.md). Durations/easings below
- * are taken from the spec's recommended ranges where given; anything not
- * explicitly numbered in the spec is a provisional value tuned to "feel
- * right" against the Figma reference and should be revisited during visual
- * QA (CLAUDE.md Section 3).
- *
- * Reduced motion: globals.css already forces near-zero duration and a
- * single iteration on every animation/transition site-wide, which
- * structurally satisfies ANIMATION_SPEC.md Section 5 for everything below
- * (continuous loops collapse to a static end-frame instead of animating).
- */
-
-/* ---------- 14. Section scroll reveal ---------- */
 .reveal {
   opacity: 0;
   transform: translateX(var(--reveal-offset, -56px));
@@ -27,13 +13,6 @@
   transform: translateX(0);
 }
 
-/* ---------- 14a. Shared Home section header reveal (owner correction pass) ----------
-   Supersedes the generic whole-section side-reveal for every Home section
-   below the Hero. One stacked language everywhere: the title rises, the
-   caption rises shortly after it, and the section's own content animation
-   starts afterwards (delayed by SECTION_CONTENT_DELAY_MS in SectionHeader.jsx).
-   Both stages share the section's single useScrollReveal() flag, so they
-   trigger together and play once per visit. */
 .section-header-title {
   opacity: 0;
   transform: translateY(40px);
@@ -55,9 +34,6 @@
   transform: translateY(0);
 }
 
-/* ---------- 14b. Featured Works converging card entrance ----------
-   The two project cards converge inward from opposite sides once the header
-   cascade has played (delay supplied per-card as --reveal-delay). */
 .fw-card-reveal {
   opacity: 0;
   transition:
@@ -76,12 +52,6 @@
   transform: translateX(0);
 }
 
-/* ---------- 14c. Projects child-page content reveal ----------
-   The dedicated Game/AI Projects pages already get their major entrance from
-   the curtain transition, so their content must complement it rather than
-   compete (owner instruction). This is the ANIMATION_SPEC.md Section 7
-   default entrance and nothing more: opacity + a short rise, once per visit.
-   `--reveal-delay` carries the Section 8 stagger (60-120ms) for grids. */
 .project-reveal {
   opacity: 0;
   transform: translateY(24px);
@@ -95,7 +65,6 @@
   transform: translateY(0);
 }
 
-/* ---------- 10. Hero staged entrance ---------- */
 @keyframes hero-fade-up {
   from {
     opacity: 0;
@@ -138,7 +107,6 @@
   animation-delay: 420ms;
 }
 
-/* ---------- 10.7 Hero profile ambient glow (subtle breathing) ---------- */
 @keyframes hero-glow-breathe {
   0%,
   100% {
@@ -154,7 +122,6 @@
   animation: hero-glow-breathe 4.5s ease-in-out infinite;
 }
 
-/* ---------- 10.8 Hero profile particles ---------- */
 @keyframes hero-particle-drift {
   0% {
     opacity: 0;
@@ -172,8 +139,7 @@
   position: absolute;
   border-radius: 999px;
   background: var(--particle-color, #ffffff);
-  /* Each dot carries its own soft glow (unlike the flat global background
-     particles) so the profile-emitted field reads as visibly more luminous. */
+
   box-shadow:
     0 0 6px 1.5px var(--particle-color, #ffffff),
     0 0 2px 0.5px var(--particle-color, #ffffff);
@@ -182,7 +148,6 @@
   will-change: transform, opacity;
 }
 
-/* ---------- 11. Global background particle drift ---------- */
 @keyframes bg-particles-drift {
   from {
     transform: translate3d(0, 0, 0);
@@ -194,14 +159,11 @@
 .bg-particles-layer {
   position: absolute;
   inset: -20% -20%;
-  /* 28s = 70s / 2.5 (owner instruction — ~2.5x the previous global drift
-     speed). Same diagonal distance/direction and tile-seamless loop as
-     before; only the duration changed. */
+
   animation: bg-particles-drift 28s linear infinite;
   will-change: transform;
 }
 
-/* ---------- 12. Tag / label hover ---------- */
 .tag-chip {
   position: relative;
   overflow: hidden;
@@ -237,12 +199,6 @@
   }
 }
 
-/* ---------- 13. Directional (arrow) button hover ----------
-   Originally scoped to external links only; the shared Button component
-   now applies this to every arrow-bearing button (internal or external),
-   per correction-pass direction — it's the site's one directional-button
-   interaction, not an external-only affordance. Class name kept as-is to
-   avoid an unrelated rename across every call site. */
 .btn-external {
   transition: transform 250ms ease-out;
 }
@@ -268,41 +224,33 @@
   }
 }
 
-/* ---------- 16.1 Featured project status radar pulse ---------- */
 .status-dot {
   position: relative;
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 999px;
   background: var(--status-color, currentColor);
 }
-.status-dot::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: var(--status-color, currentColor);
-  animation: radar-pulse 1.5s ease-out infinite;
+
+.status-dot--breathing {
+  animation: status-breathe 2.4s ease-in-out infinite;
 }
-@keyframes radar-pulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
+@keyframes status-breathe {
+  0%,
   100% {
-    transform: scale(3.2);
-    opacity: 0;
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
   }
 }
 
-/* ---------- 16.2 Featured project Key Features bullet glow (owner correction pass) ---------- */
 .feature-bullet-glow {
   background: #60a5fa;
   box-shadow: 0 0 20px 2px #60a5fa;
 }
 
-/* ---------- 17. Featured project screenshot outline shine ---------- */
 @property --outline-angle {
   syntax: '<angle>';
   inherits: false;
@@ -340,7 +288,6 @@
   }
 }
 
-/* ---------- 19.3 Home Experience timeline rail draw ---------- */
 .timeline-rail {
   transform: scaleX(0);
   transform-origin: left center;
@@ -351,20 +298,6 @@
   transform: scaleX(1);
 }
 
-/* ---------- 19.9 Timeline rail glow (owner correction pass) ----------
-   A long, full-width shape reads as much more prominent than a small one at
-   the same opacity — prominence scales with area, not just per-pixel alpha.
-   The rail's own fill must therefore be noticeably translucent (not the
-   fully-opaque bg-accent it used to be), and its halo kept small/faint,
-   or a "long line" glow always overpowers a small "dot" glow regardless of
-   the node's own numbers. See HomeExperience.jsx for the bg-accent/55 fill.
-
-   Intensity pass: opacity on the two original layers raised ~3x (the main
-   intensity driver, per the owner's direction — blur radii only nudged up
-   slightly to keep the falloff smooth), plus one new, very low-opacity wide
-   layer for soft ambient bloom. Still clearly under the node's glow
-   (.timeline-node tops out at 0.85 opacity on an 8px blur) on every layer,
-   so the rail stays visibly subtler despite the increase. */
 .timeline-rail-glow {
   box-shadow:
     0 0 28px 0 rgba(96, 165, 250, 0.15),
@@ -372,14 +305,6 @@
     0 0 6px 0 rgba(96, 165, 250, 0.6);
 }
 
-/* ---------- 19.10 Timeline node glow (owner correction pass) ----------
-   Single solid circle — the earlier two-layer "bullseye" (a translucent
-   ::before disc + a small bright ::after disc inside a separate ring) read
-   as two distinct nested circles / a hollow target, which was the wrong
-   visual intent. One element carries the fill and the glow together: no
-   pseudo-elements, no nested shapes, no border — a white stroke was tried
-   here previously but read as an unwanted outline around the glow rather
-   than part of it, so the node is now fill + glow only. */
 .timeline-node {
   background: #60a5fa;
   border-radius: 9999px;
@@ -388,11 +313,6 @@
     0 0 8px 1px rgba(96, 165, 250, 0.85);
 }
 
-/* ---------- 19.11 Timeline image glow (owner correction pass) ----------
-   Matches the approved glow language used elsewhere (white stroke + dual
-   blue drop-shadow layers). Lives on a wrapper separate from the
-   overflow-hidden crop box so overflow-hidden can't clip its own
-   box-shadow — see CarouselImage's active-image glow for the same pattern. */
 .timeline-image-glow {
   border-color: rgba(255, 255, 255, 0.75);
   box-shadow:
@@ -400,11 +320,6 @@
     0 0 30px 0 rgba(96, 165, 250, 0.1);
 }
 
-/* ---------- 19.8 Timeline CTA (owner correction pass) ----------
-   "View All Experiences" is the closing event of the timeline sequence, so
-   its --reveal-delay is computed in HomeExperience.jsx as the later of the
-   rail finishing and the last checkpoint landing — it must never appear
-   while the rail is still drawing. */
 .timeline-cta {
   opacity: 0;
   transform: translateX(-16px);
@@ -418,7 +333,6 @@
   transform: translateY(0);
 }
 
-/* ---------- 19.5-19.7 Timeline checkpoint reveal ---------- */
 .timeline-item {
   opacity: 0;
   transition:
@@ -440,11 +354,6 @@
   transform: none;
 }
 
-/* ---------- 25.1 Navbar active indicator ----------
-   The measured box that slides to the active item. Owner redesign: it no
-   longer paints a pill itself — it holds a faint aura and the firefly cloud
-   below. overflow stays visible on purpose so fireflies can hover slightly
-   past the item (bounded by NAV_FIREFLIES.overflowPx in NavFireflies.jsx). */
 .nav-active-glow {
   overflow: visible;
   transition:
@@ -453,9 +362,6 @@
     opacity 200ms ease-out;
 }
 
-/* Very soft aura behind the active label — a hint of the old highlight, kept
-   well below the fireflies so they carry the identity. Tune the 0.12 alpha
-   for aura strength. */
 .nav-active-aura {
   position: absolute;
   inset: 0;
@@ -463,18 +369,6 @@
   background: radial-gradient(ellipse at center, rgba(96, 165, 250, 0.12), rgba(96, 165, 250, 0) 72%);
 }
 
-/* ---------- 25.1 Navbar active fireflies (owner redesign + motion-polish) ----------
-   Position is NOT animated here: NavFireflies.jsx writes each dot's
-   `transform` every frame from the spring integrator in
-   src/motion/navFireflyPhysics.js (chase on route change, ambient 2D drift
-   at rest). The only CSS motion left is the opacity shimmer, whose per-dot
-   period/phase (--ff-shimmer / --ff-shimmer-delay) come from the same
-   per-particle traits so no two dots pulse in step.
-
-   --ff-glow (per firefly, NAV_FIREFLIES.glow range) scales the halo: the
-   tight inner shadow is the bright core, the wider one the soft bloom.
-   Dots are positioned by their top-left corner, so the negative margin
-   re-centres each one on its integrated point. */
 .nav-fireflies {
   position: absolute;
   inset: 0;
@@ -506,30 +400,24 @@
     opacity: var(--ff-o-min, 0.3);
   }
 }
-/* Reduced motion (NAV_FIREFLIES.reducedMotionMs): no spring loop runs — the
-   component places each dot on its rest offset and this short transition
-   carries it there. The shimmer is collapsed by globals.css; pin full
-   opacity so the active page stays clearly marked. */
+
 .nav-firefly--static {
   animation: none;
   opacity: var(--ff-o-max, 1);
   transition: transform var(--ff-static-ms, 300ms) ease-out;
 }
 
-/* ---------- 15.2 About Me carousel spatial handoff (owner correction pass) ----------
-   Every slide is rendered simultaneously as an absolutely-positioned card
-   inside a shared stage (AboutMeCarousel.jsx), keyed by data-offset — its
-   signed, shortest-path distance from the active index (0 = active, ±1 =
-   side preview, ±2 = off-stage, fully transparent). Navigating only changes
-   each card's data-offset attribute; the transition below then animates
-   every card between its old and new transform/opacity in one continuous
-   motion, so the outgoing active card visibly shrinks into the side-preview
-   slot while the incoming preview grows into center at the same time,
-   instead of a hard content swap. Percentages in translateX resolve against
-   each card's own (shared, un-scaled) box size, so they stay accurate
-   regardless of the scale() also applied.
-   prefers-reduced-motion collapses this to an immediate position change via
-   the site-wide transition-duration override in globals.css. */
+.cv-btn {
+  transition:
+    transform 250ms ease-out,
+    border-color 200ms ease-out,
+    box-shadow 250ms ease-out;
+}
+.cv-btn:hover,
+.cv-btn:focus-visible {
+  box-shadow: 0 0 14px 1px rgba(96, 165, 250, 0.35);
+}
+
 .carousel-stage {
   --carousel-peek-x: 0%;
   --carousel-peek-scale: 1;
@@ -548,9 +436,7 @@
     --carousel-far-opacity: 0;
   }
 }
-/* --carousel-card-ms lets the entrance reel drive its own per-step duration
-   (AboutMeCarousel.jsx sets it while spinning, then clears it so manual
-   navigation returns to the standard 450ms handoff). */
+
 .carousel-card {
   border-color: rgba(255, 255, 255, 0.1);
   transition:
@@ -589,14 +475,6 @@
   transform: translateX(var(--carousel-far-x)) scale(var(--carousel-far-scale));
 }
 
-/* Active-image glow (owner correction passes) — border/box-shadow target
-   values only; the transition itself lives on .carousel-card above so the
-   glow eases in/out as data-offset changes instead of teleporting between
-   images.
-
-   Glow reads as: stroke -> concentrated edge glow (tight blur, small
-   spread, higher opacity) -> softer outer haze (wide blur, low opacity,
-   kept from ballooning into a large cloud). */
 .carousel-active-image {
   border-color: rgba(255, 255, 255, 0.75);
   box-shadow:
@@ -604,11 +482,6 @@
     0 0 80px 0 rgba(96, 165, 250, 0.32);
 }
 
-/* ---------- 15.3 Caption quick crossfade ----------
-   Deliberately shorter/subtler than the image handoff above — content
-   swaps the instant the active index changes, so this only fades the
-   already-updated text in (and, via the same opacity dip, out) rather than
-   choreographing a separate outgoing-text node. */
 .carousel-caption {
   transition: opacity 220ms ease-in-out;
 }
@@ -619,12 +492,6 @@
   opacity: 1;
 }
 
-/* ---------- 15.9 Carousel text settle reveal (owner correction pass) ----------
-   Plays exactly once, when the entrance reel settles on Slide 1 (never
-   during the spin, never again on manual navigation afterward — see
-   hasSettledRef in AboutMeCarousel.jsx). Title rises first; the caption
-   travels a shorter distance and starts slightly after it, so it visibly
-   follows the title rather than moving with it. */
 .carousel-text-reveal {
   opacity: 0;
   transition:
@@ -643,10 +510,6 @@
   transform: translateY(0);
 }
 
-/* ---------- 15.4 Carousel entrance reel fade-in ----------
-   The reel's motion is driven in JS (AboutMeCarousel.jsx); this only fades
-   the carousel in as the spin starts so it doesn't sit visible-but-static
-   while the header cascade plays. */
 .carousel-entrance {
   opacity: 0;
   transition: opacity 320ms ease-out;
@@ -655,20 +518,6 @@
   opacity: 1;
 }
 
-/* ================================================================
-   20. Dedicated Experiences Page (ANIMATION_SPEC.md Section 20,
-   INTERACTION_SPEC.md Sections 17-21)
-   ================================================================
-   Deliberately NOT the Home timeline system (Section 19), which 19.1
-   forbids reusing here: that rail runs left->right and reveals everything on
-   scroll, this one runs top->bottom and reveals only collapsed headers until
-   the user opens a group. The two share visual vocabulary (.timeline-node,
-   .timeline-image-glow) but no motion. */
-
-/* ---------- 20.B Vertical rail draw ----------
-   Linear, not eased: the node delays computed in ExperienceTimeline.jsx are
-   plain fractions of this duration, so a decelerating rail would let the
-   lower nodes light before the rail tip actually reached them. */
 .exp-rail {
   transform: scaleY(0);
   transform-origin: top center;
@@ -678,25 +527,6 @@
   transform: scaleY(1);
 }
 
-/* Collapsed-header entrance: the node pops, then the title and the
-   organisation/date slide rightward into place (owner instruction: node ->
-   title -> organisation + date, "subtle slide-in-to-the-right"). The
-   translate lives on a wrapper so it can never fight the hover scale on the
-   title itself — same separation the Contact cards use.
-
-   Node entrance (owner motion-polish pass): a plain opacity/scale transition
-   read as too passive, so the node now runs a one-shot "impact" keyframe
-   instead — scale overshoots past 1, recoils, and settles, while its glow
-   (the box-shadow already declared on the shared .timeline-node rule, 19.10)
-   briefly intensifies then fades back to normal. Kept to a single element /
-   single circle throughout (no rings, no second shape) per owner instruction.
-   Because CSS animations win the cascade over normal declarations, animating
-   box-shadow here overrides .timeline-node's static value only while the
-   keyframes run; the animation's own 0%/100% box-shadow values are kept
-   identical to .timeline-node's so it hands back cleanly. prefers-reduced-
-   motion collapses this to its final frame via the global animation-duration
-   override (globals.css), which already satisfies 19.11/20.14 without a
-   dedicated media query here. */
 .exp-node-reveal {
   opacity: 0;
   transform: scale(0.55);
@@ -749,11 +579,6 @@
   transform: none;
 }
 
-/* ---------- 20.2 Group title hover ----------
-   Scale + a one-shot shine sweep, the same language as .tag-chip. The shine
-   is clipped to the title box and plays once per hover (no continuous
-   repeat while the pointer rests). transform-origin keeps the title anchored
-   to the rail so growing it can't shift the column. */
 .exp-title {
   position: relative;
   display: inline-block;
@@ -788,24 +613,6 @@
   }
 }
 
-/* ---------- 20.3 Accordion panel ----------
-   grid-template-rows 0fr -> 1fr is the one way to animate "to content
-   height" without measuring the panel in JS or pinning a magic max-height.
-   It does animate a layout property, which Section 4 asks us to avoid where
-   possible — but the alternatives (taking the panel out of flow, or a
-   guessed max-height that clips long entries) would each break the design,
-   so this is the deliberate exception. The staged content reveal below is
-   what the eye actually follows.
-
-   Motion-polish pass (owner instruction): open and close are no longer the
-   same transition played forwards/backwards. CSS resolves a transition's
-   duration/easing from the RULE BEING TRANSITIONED TO, so .exp-panel (the
-   closed state) and .exp-panel-open (the open state) each carry their own
-   timing — a fast decelerating curve on the way open, a faster accelerating
-   one on the way shut. grid-template-rows itself is never given overshoot
-   (an fr track has no headroom to overshoot into without risking layout
-   jank); the "controlled micro-overshoot" feel instead lives entirely on
-   .exp-panel-content below, which only ever moves via transform. */
 .exp-panel {
   display: grid;
   grid-template-rows: 0fr;
@@ -826,19 +633,6 @@
     opacity 260ms ease-out;
 }
 
-/* Opened content wrapper (owner instruction): the "premium physical
-   feedback" overshoot the panel itself can't safely carry. Opening runs a
-   one-shot keyframe with a small scale/translateY overshoot past its resting
-   state before settling; closing runs its own short keyframe (a quick
-   compression, not the open keyframe backward).
-
-   Verified in-browser (Web Animations API scrub) that a keyframe-in /
-   transition-out pairing does NOT work here: once .exp-panel-open is
-   removed, the cancelled animation's value snaps straight to the base rule
-   with no transition firing at all — Chrome does not treat that as a
-   transitionable change. .exp-panel-content-closing is therefore a real,
-   explicit second keyframe, applied for a fixed window by ExperienceTimelineItem
-   (isClosing state) rather than left to a CSS-only handoff. */
 .exp-panel-content {
   transform: scale(0.985) translateY(-2px);
 }
@@ -868,35 +662,6 @@
   }
 }
 
-/* ---------- 20.6 / 20.7 / 20.8 Staged expand reveal (owner motion-polish +
-   reset-lifecycle correction pass) ----------
-   Order per owner instruction: tags one by one -> branch lines draw ->
-   key points slide in one by one -> supporting image last.
-
-   Reset bug (root cause): this used to be ancestor-toggle CSS transitions —
-   `.exp-panel-open .exp-tag { opacity: 1; transform: none; }` — on elements
-   that stayed mounted across every open/close cycle of the same experience.
-   transition-delay restarts counting from the moment of a property CHANGE;
-   it does not resume stored progress. Closing removes .exp-panel-open, which
-   should transition each element back to its hidden base state, but that
-   reverse transition carries the SAME delay the element used to enter. A
-   close followed by a fast reopen can land before that reverse transition's
-   delay had even elapsed — at which point the element's actual painted value
-   was still "opacity: 1, transform: none" from the previous open. Re-adding
-   .exp-panel-open then asks for that exact same value again: no delta, so no
-   transition fires, and the element is simply already sitting at its
-   "revealed" state the next time the panel opens. That is the reported
-   "already visible" bug, and it is inherent to gating a persistent element's
-   reveal on a value comparison rather than on the element's own lifecycle.
-
-   Fixed structurally rather than patched: ExperienceTimelineItem.jsx now
-   mounts this whole block only while open (kept mounted a little past close
-   so the panel's own grid-template-rows collapse still has real content to
-   size against), under a key that changes on every open. A freshly mounted
-   element cannot already be sitting at its target value — its keyframe
-   animation below always starts at 0% the instant it exists in the DOM — so
-   there is no ancestor-class dependency left to go stale, and no scenario
-   where "reopen" has nothing new to animate. */
 .exp-tag {
   display: inline-flex;
   opacity: 0;
@@ -954,8 +719,7 @@
     transform: translateX(0);
   }
 }
-/* Premium and quiet: fade + a short rise with a whisper of scale, never a
-   flashy zoom (owner instruction) — still true, just more intentional now. */
+
 .exp-figure {
   opacity: 0;
   animation: exp-figure-pop 420ms cubic-bezier(0.22, 0.9, 0.32, 1) both;
@@ -978,8 +742,6 @@
   }
 }
 
-/* ---------- 20.12 Supporting-image crossfade ----------
-   Single fixed frame, one image dominant at a time, no carousel chrome. */
 .exp-slide {
   opacity: 0;
   transition: opacity 400ms ease-in-out;
@@ -988,9 +750,6 @@
   opacity: 1;
 }
 
-/* ---------- 20.13 More Experiences tail ----------
-   The CTA slides rightward into place once the rail reaches the tail node;
-   the conveyor then rises from below. */
 .exp-cta {
   opacity: 0;
   transform: translateX(-26px);
@@ -1013,27 +772,6 @@
   transform: none;
 }
 
-/* ---------- 20.13 Conveyor items (owner correction pass) ----------
-   Track movement is driven in JS (MoreExperiencesConveyor.jsx) rather than a
-   CSS marquee: hover pause, direct pointer/touch dragging and the release
-   momentum that decays back to the default speed all have to share one
-   position accumulator, and swapping a CSS animation's duration mid-run
-   would visibly jump the strip.
-   Everything below is hover presentation only.
-
-   Glow-clipping root cause: .conveyor-frame used to carry overflow-hidden
-   itself (needed to round the image's corners) on the SAME element as its
-   hover box-shadow glow, and it sat directly inside the marquee's
-   overflow-hidden viewport with zero spare vertical room — so the glow's
-   blur had nowhere to bleed into and read as a hard rectangular cutoff on
-   every side. Fixed by splitting responsibilities: .conveyor-frame is now
-   the outer wrapper (overflow: visible) that owns the glow and the hover
-   scale, a plain inner div owns overflow-hidden + the matching rounded
-   corners and clips only the image, and the marquee viewport itself gained
-   vertical bleed room (see the -my-14/py-14 wrapper in the JSX, MDN's
-   negative-margin/matching-padding trick — net zero layout height, real
-   clip-box headroom) — the same wrapper/crop-box split already used for
-   .timeline-image-glow and .carousel-active-image. */
 .conveyor-frame {
   border-color: rgba(255, 255, 255, 0.12);
   transition:
@@ -1048,9 +786,7 @@
     0 0 80px 0 rgba(96, 165, 250, 0.25),
     0 0 30px 0 rgba(96, 165, 250, 0.12);
 }
-/* Title first, metadata immediately after (same hierarchy group as the
-   title), caption last — all entering downward (they start above their
-   resting position and drop into it). */
+
 .conveyor-text {
   opacity: 0;
   transform: translateY(-12px);
@@ -1068,9 +804,7 @@
 .conveyor-item:hover .conveyor-text--caption {
   transition-delay: 150ms;
 }
-/* INTERACTION_SPEC.md 21.7 is an explicit TBD, but 27 is not: hover must
-   never be the only way to reach content. Without a hover-capable pointer
-   the titles and captions are simply always visible. */
+
 @media (hover: none) {
   .conveyor-text {
     opacity: 1;
@@ -1078,12 +812,6 @@
   }
 }
 
-/* ---------- 21. Home Contact quadrant entrance (owner correction pass) ----------
-   Each card converges from the compass direction of its final 2x2 quadrant
-   (NW / NE / SW / SE) with a very subtle scale, settling without overshoot.
-   Per-card --reveal-delay (set in HomeContact.jsx) keeps them slightly
-   staggered but overlapping. The transform lives on a wrapper element, not
-   the card itself, so it can't fight the shared .btn-external hover scale. */
 .contact-card-reveal {
   opacity: 0;
   transition:
@@ -1108,41 +836,6 @@
   transform: translate(0, 0) scale(1);
 }
 
-/* ---------- 21b. Contact card hover glow + sheen (owner instruction) ----------
-   Not covered by ANIMATION_SPEC.md/INTERACTION_SPEC.md — CLAUDE.md Section 26
-   priority 1 (explicit owner instruction) applies. Shared by both
-   ContactCards call sites (Home Contact + dedicated Contact page) since both
-   render the same ContactLink.
-
-   Glow lives on the card (`.contact-card`, the <a>/<button> itself, never
-   overflow-hidden) so its box-shadow can bleed outward uncropped; the sheen
-   lives one layer in on `.contact-card-sheen`, an inset:0 absolutely
-   positioned child that owns overflow-hidden + border-radius:inherit — the
-   same wrapper/crop-box split used by .timeline-image-glow and
-   .carousel-active-image, here needed because the glow and the sheen clip
-   can't both live on one element without the clip cutting the glow into a
-   hard rectangle.
-
-   The sheen itself reuses .tag-chip's exact trigger mechanism (an
-   opacity-gated ::before with a `1`-iteration keyframe fired by :hover/
-   :focus-visible starting to match): the animation restarts from its 0% frame
-   every time hover/focus-visible begins, so it always plays exactly once per
-   entry and never loops while the pointer stays inside. No dedicated
-   prefers-reduced-motion rule is needed for the same reason .tag-chip has
-   none: the site-wide reduced-motion override in globals.css already
-   collapses the keyframe and the box-shadow transition to their end state. */
-/* Scale easing (owner motion-polish pass). The scale amount itself is still
-   the shared .btn-external hover (1.04); what was wrong was that this rule's
-   `transition` shorthand silently dropped .btn-external's transform
-   transition, so the card snapped between sizes. A transition takes its
-   timing from the rule of the state being ENTERED, so:
-     - the base rule below owns hover-OUT: 320ms, a plain decelerating curve
-       (no overshoot below 1.0 — that would read as a flinch);
-     - the :hover rule owns hover-IN: 400ms on a curve whose y1 > 1 gives a
-       brief ~1.5% overshoot past 1.04 before settling — spring-like without
-       being rubbery.
-   Reduced motion needs no rule here: globals.css collapses both durations,
-   which also removes the overshoot. */
 .contact-card {
   transition:
     transform 320ms cubic-bezier(0.22, 0.9, 0.36, 1),
@@ -1186,8 +879,7 @@
 .contact-card:hover .contact-card-sheen::before,
 .contact-card:focus-visible .contact-card-sheen::before {
   opacity: 1;
-  /* 1430ms = 650ms x 2.2 (owner instruction — approximately 2.2x slower
-     than the original approved speed, nothing else about the sweep changed). */
+
   animation: contact-card-sheen-sweep 1430ms ease-out 1;
 }
 @keyframes contact-card-sheen-sweep {
@@ -1199,36 +891,8 @@
   }
 }
 
-/* ================================================================
-   22. Achievements Page carousel (ANIMATION_SPEC.md Section 21,
-   INTERACTION_SPEC.md Section 22)
-   ================================================================
-   REFINEMENT PASS (owner instruction, 2026-09-10 — CLAUDE.md Section 26
-   priority 1 outranks the original measured composition below). The old
-   layout mounted the whole achievement — title, metadata, card,
-   description — per slide and let neighbours peek in clipped at the stage
-   edge. The owner asked for that peek to become a real depth/rotation
-   illusion instead: only the active card carries text, and non-active cards
-   are bare images stacked behind it, shrinking and fading with distance
-   (near = ±1, far = ±2, hidden = further) rather than being clipped.
-
-   Still shares the About Me carousel's offset model (Section 15.2): every
-   card is mounted at once and its emphasis is derived purely from
-   `data-state`, so navigating animates the outgoing and incoming cards in
-   one continuous motion instead of swapping content in place.
-
-   MEASURED from docs/figma-reference/achievements/AchivementsPage.png at the
-   1440px reference (still authoritative where this pass doesn't override
-   it): certificate card aspect ratio 384:290 with a ~16px radius; title 24px
-   bold, metadata 14px #798291, description 16px/20px near-white; the card
-   sits 16px under the metadata and the description 20px under the card. */
-
 .ach-carousel {
-  /* --ach-card-w is the active card's own size — every card shares this box
-     (non-active cards shrink via transform: scale, not by resizing the box),
-     and --ach-step (a percentage) resolves against that same shared box, so
-     both scale responsively together at every breakpoint. Sized up from the
-     measured 384px per the owner's "more dominant" instruction. */
+
   --ach-card-w: 84%;
   --ach-step: 34%;
   --ach-near-scale: 0.68;
@@ -1238,10 +902,7 @@
   --ach-far-opacity: 0;
   --ach-far-y: 18px;
   --ach-ms: 520ms;
-  /* Ease-out dominant rather than a symmetric ease-in-out: cards leave
-     promptly and spend most of the duration settling, which reads as the
-     deliberate, slightly sprung snap the owner asked for — without the
-     overshoot that would fight the Figma end state. */
+
   --ach-ease: cubic-bezier(0.24, 0.9, 0.26, 1);
 
   opacity: 0;
@@ -1254,12 +915,7 @@
   opacity: 1;
   transform: translateY(0);
 }
-/* The depth illusion (near/far peeking cards) only switches on from the
-   tablet breakpoint up — below it the active card already claims most of
-   the viewport width, leaving no clean room to fan neighbours out without
-   risking the "cropped at the edge" look the owner asked to remove. Mobile
-   still gets the full carousel (swipe, arrows, dots); it just shows one
-   card at a time. */
+
 @media (min-width: 640px) {
   .ach-carousel {
     --ach-card-w: 56%;
@@ -1277,16 +933,6 @@
   }
 }
 
-/* ---------- 22.1 Stage ----------
-   The horizontal clip stays the Figma stage width (1076px) — every offset
-   step below is tuned so even the "far" tier's scaled-down card resolves
-   fully inside that box, so nothing is ever hard-cropped by this clip; cards
-   only ever leave view by fading out. The block padding and its matching
-   negative margin grow the clip box vertically only, so the active card's
-   outer glow and particle field are not sliced off by a clip that exists
-   purely to hide the off-stage cards. `touch-action: pan-y` leaves vertical
-   page scrolling to the browser and hands the component only horizontal
-   gestures. */
 .ach-viewport {
   position: relative;
   flex: 1 1 auto;
@@ -1303,9 +949,6 @@
   user-select: none;
 }
 
-/* The reference box every card is centered and scaled against — sized
-   exactly like the active card, so the active card sits at true scale(1)
-   with no extra transform. */
 .ach-track {
   position: relative;
   width: var(--ach-card-w);
@@ -1318,10 +961,6 @@
   transition: none;
 }
 
-/* Every card fills the same box (`inset: 0` of .ach-track) and is pushed to
-   its depth position purely by transform, so scale()'s default center
-   origin fans every card outward from one shared point — the rotation/depth
-   illusion the owner asked for. */
 .ach-card-item {
   position: absolute;
   inset: 0;
@@ -1364,10 +1003,6 @@
   pointer-events: none;
 }
 
-/* ---------- 22.1b Stage row + side arrows ----------
-   Arrows flank the stage directly rather than sitting under the dots, per
-   the owner's instruction — the same `.btn-external` language used
-   everywhere else on the site, just relocated. */
 .ach-stage-row {
   display: flex;
   align-items: center;
@@ -1392,7 +1027,6 @@
   box-shadow: 0 0 18px 1px rgba(96, 165, 250, 0.4);
 }
 
-/* ---------- 22.2 Caption typography (measured) ---------- */
 .ach-slide-title {
   font-size: 20px;
   font-weight: 700;
@@ -1403,8 +1037,7 @@
   margin-top: 6px;
   font-size: 14px;
   line-height: 1.4;
-  /* One-off measured value, not a repeated design rule (CLAUDE.md Section 17)
-     — noticeably dimmer than the shared --color-muted. */
+
   color: #798291;
 }
 .ach-slide-description {
@@ -1420,17 +1053,18 @@
   }
 }
 
-/* ---------- 22.3 Content synchronisation (ANIMATION_SPEC.md 21.3) ----------
-   Only the active achievement's text ever renders visibly (requirement 3 —
-   non-active cards show no title/issuer/date/caption at all). Every
-   achievement's copy still mounts at once, stacked in one grid cell per
-   block, so the reserved height is always the tallest achievement's and
-   switching cards never shifts the page. `.carousel-caption` (shared with
-   the About Me carousel) provides the crossfade; the cell-level opacity/
-   transform below is what actually swaps the visible content. */
 .ach-caption-top,
 .ach-caption-bottom {
   text-align: center;
+}
+
+.ach-caption-top {
+  margin-bottom: 32px;
+}
+@media (min-width: 640px) {
+  .ach-caption-top {
+    margin-bottom: 40px;
+  }
 }
 .ach-caption-grid {
   display: grid;
@@ -1456,14 +1090,6 @@
   transition-delay: 110ms;
 }
 
-/* ---------- 22.4 Achievement card ----------
-   The active glow is the About Me carousel's two-layer treatment extended to
-   three: a tight edge glow, a mid halo, and a wide low-opacity haze. Splitting
-   it keeps the result bright and legibly special instead of the flat cloud a
-   single large blur produces. Slightly stronger than before per the owner's
-   "active glow can be a touch stronger" instruction. Non-active cards carry
-   no glow of their own — their reduced scale/opacity/blur is the only
-   emphasis cue, keeping the stack from reading as chaotic. */
 .ach-card-wrap {
   position: absolute;
   inset: 0;
@@ -1509,9 +1135,6 @@
     0 0 170px 30px rgba(96, 165, 250, 0.18);
 }
 
-/* Static glass sheen — a fixed highlight, not a travelling shine, so no motion
-   is invented beyond what the specs define (CLAUDE.md Section 13). It only
-   fades in and out with the active state. */
 .ach-card-sheen {
   position: absolute;
   inset: 0;
@@ -1533,14 +1156,6 @@
   opacity: 1;
 }
 
-/* ---------- 22.5 Celebratory particles (ANIMATION_SPEC.md 21.4/21.5) ----------
-   Same drift keyframes as the Hero profile field; only the per-dot glow is
-   stronger, which is the "slightly more prominent than the Hero particles"
-   21.4 allows. Only the active card ever owns a particle field now (it is
-   the sole visual origin per 21.4); the outgoing field fades immediately on
-   navigation while the incoming one waits out roughly half the transition
-   before building up, so the field is never seen teleporting between
-   achievements (21.5). */
 .ach-particles {
   opacity: 0;
   transition: opacity 300ms ease-out;
@@ -1561,7 +1176,6 @@
   will-change: transform, opacity;
 }
 
-/* ---------- 22.6 Indicator dots ---------- */
 .ach-dot {
   height: 10px;
   width: 10px;
@@ -1581,14 +1195,6 @@
   box-shadow: 0 0 12px 1px rgba(96, 165, 250, 0.75);
 }
 
-/* ---------- 22.7 Click-to-enlarge lightbox ----------
-   Owner instruction, not covered by ANIMATION_SPEC.md/INTERACTION_SPEC.md
-   (CLAUDE.md Section 26 — an explicit owner instruction outranks a written
-   spec that simply doesn't address this yet). Kept in the same blue-glow
-   card language as the carousel itself rather than inventing a new visual
-   idiom. prefers-reduced-motion is handled by the site-wide transition/
-   animation override in globals.css, so no separate reduced-motion rule is
-   needed here. */
 .ach-lightbox {
   position: fixed;
   inset: 0;
@@ -1613,12 +1219,7 @@
   position: relative;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.7);
-  background: rgba(8, 11, 18, 0.6);
-  box-shadow:
-    0 0 30px 2px rgba(96, 165, 250, 0.55),
-    0 0 90px 14px rgba(96, 165, 250, 0.3),
-    0 24px 60px rgba(0, 0, 0, 0.5);
-  padding: 6px;
+  line-height: 0;
   animation: ach-lightbox-scale-in 260ms cubic-bezier(0.24, 0.9, 0.26, 1);
 }
 @keyframes ach-lightbox-scale-in {
@@ -1635,7 +1236,7 @@
   max-height: 86vh;
   width: auto;
   height: auto;
-  border-radius: 16px;
+  border-radius: 19px;
   object-fit: contain;
 }
 .ach-lightbox-placeholder {
@@ -1674,30 +1275,6 @@
   outline-offset: 3px;
 }
 
-/* ================================================================
-   SKILLS AND CREDENTIALS PAGE (ANIMATION_SPEC.md Section 22)
-   ================================================================
-   Every duration and easing below is a `var()` published from
-   src/motion/skillsMotion.js (SKILLS_MOTION_VARS) on the page root, and
-   every delay arrives per-element as `--reveal-delay` from the same file.
-   Nothing here is a hard-coded timing value, so the page is tuned in one
-   place. The fallbacks in each var() only matter if a rule is ever reused
-   outside that page root.
-
-   Reduced motion needs no dedicated block: globals.css already forces every
-   duration and delay to ~0, which collapses each of these to its end frame
-   with the full Figma appearance intact (22.1/22.2/22.3 reduced-motion
-   rules). */
-
-/* ---------- 22.0 Left-to-right wipe ----------
-   The page's one "horizontal reveal" primitive (owner instruction), used by
-   the three section titles and by every toolkit category title. It is a
-   progressive left-to-right uncover — the same idea as 22.1's typing-like
-   title reveal, minus a per-character rhythm that would fight the Figma
-   typography — carried by clip-path so the glyphs never stretch and the text
-   settles on the exact Figma metrics. The opacity leg is deliberately short:
-   it takes the hard edge off the wipe's start without turning it into a
-   plain fade. */
 .skill-wipe {
   opacity: 0;
   clip-path: inset(0 100% 0 0);
@@ -1714,11 +1291,6 @@
   transform: none;
 }
 
-/* ---------- 22.0 Shared rise ----------
-   Fade + a short rise, optionally with a whisper of scale — the site's quiet
-   settle, reused by the Education institution/date/panel and the Language
-   proficiency text so those never read as a second motion language.
-   --rise-y / --rise-scale are per-use dials. */
 .skill-rise {
   opacity: 0;
   transform: translateY(var(--rise-y, 12px)) scale(var(--rise-scale, 1));
@@ -1732,13 +1304,6 @@
   transform: none;
 }
 
-/* ---------- 22.0 Frame materialisation ----------
-   Owner instruction for the toolkit cards ("ease-out zoom-in, the glowing
-   frame materialising into place"), reused by the Language frame. The glow
-   is animated with the box, not declared statically, which is what makes it
-   read as materialising rather than as a box that fades in already lit.
-   --frame-glow carries the element's final Figma glow so one rule can serve
-   both frames. */
 .skill-frame {
   opacity: 0;
   transform: scale(var(--frame-from, 0.94));
@@ -1755,17 +1320,6 @@
   box-shadow: var(--frame-glow, 0 0 60px rgba(96, 165, 250, 0.1), 0 0 24px rgba(96, 165, 250, 0.16));
 }
 
-/* ---------- 22.1 Toolkit tag pop ----------
-   The Skills tags reveal LEFTMOST FIRST, left to right (owner correction
-   pass, SkillsToolkits.jsx `index * tagStepMs`) — back to 22.1's original
-   left-to-right ordering, superseding an intermediate rightmost-first pass.
-   The per-tag motion itself is an explicitly preserved visual (owner
-   instruction): each tag still enters from its own right and overshoots
-   slightly to the left regardless of sequence direction, so it now runs
-   counter to the reveal order rather than "with" it as the earlier pass
-   described — a deliberate scope boundary, not an oversight.
-   Lives on a wrapper span around <Label> so the settled transform can never
-   fight .tag-chip's hover scale (same separation .exp-tag uses). */
 .tk-tag {
   display: inline-flex;
   opacity: 0;
@@ -1792,13 +1346,6 @@
   }
 }
 
-/* ---------- 22.2 Education rail draw ----------
-   Linear, exactly like .exp-rail and for the same reason: the checkpoint
-   delays are plain fractions of this duration (railProgressAt() in
-   skillsMotion.js), so an eased rail would let nodes light before the tip
-   reached them. --edu-rail-inset is the shared geometry constant — the rail
-   is inset from the 3-column grid on both sides, and that same number is fed
-   back into the delay maths. */
 .edu-rail-track {
   margin-inline: var(--edu-rail-inset, 5%);
 }
@@ -1812,18 +1359,6 @@
   transform: scaleX(1);
 }
 
-/* ---------- 22.3 Language connector fill ----------
-   "Energy extending downward", in two transform-only layers inside a
-   fixed-height wrapper so nothing below it can shift:
-
-     .lang-line       the rail itself, scaleY(0 -> 1) from its top edge
-     .lang-line-head  a bright point riding the growing tip, which fades out
-                      as the fill lands so the settled line matches Figma's
-                      plain connector exactly
-
-   Both share --lang-line-ms and --skill-ease-out; if the head is ever
-   retimed independently it will visibly drift off the tip. The head's travel
-   distance is --lang-line-h, the wrapper's own height. */
 .lang-line {
   transform: scaleY(0);
   transform-origin: top center;
@@ -1835,9 +1370,7 @@
 .lang-line-visible {
   transform: scaleY(1);
 }
-/* Centring is done with `left`/`top` offsets, never a translate: the
-   keyframe below owns `transform` outright, so any centring translate on
-   this element would be discarded the moment the animation starts. */
+
 .lang-line-head {
   position: absolute;
   left: calc(50% - 3.5px);
@@ -1870,13 +1403,6 @@
   }
 }
 
-/* ================================================================
-   23. Certificates Page (ANIMATION_SPEC.md Section 23,
-   INTERACTION_SPEC.md Sections 24-25)
-   ================================================================ */
-
-/* ---------- Filter bar reveal (implementation prompt Section 13:
-   title -> subtitle -> filter bar -> grid) ---------- */
 .cert-filter-reveal {
   opacity: 0;
   transform: translateY(16px);
@@ -1889,9 +1415,6 @@
   transform: translateY(0);
 }
 
-/* ---------- 23.2 Active filter indicator ----------
-   Sliding underline, measured the same way as Navbar's active-page glow
-   (CertificateFilterBar.jsx). ~200-350ms smooth ease-in-out per spec. */
 .cert-filter-tab {
   position: relative;
   padding-bottom: 10px;
@@ -1927,10 +1450,6 @@
     opacity 200ms ease-out;
 }
 
-/* ---------- 23.2 Grid filtering transition ----------
-   Whole-grid crossfade: matching CertificateGrid.jsx's fade-out -> swap ->
-   fade-in sequence. Fast and restrained per spec — opacity plus a very
-   small settle, never a dramatic card-level fly/rotate/flip. */
 .cert-grid-transition {
   transition:
     opacity 220ms ease-out,
@@ -1941,10 +1460,6 @@
   transform: translateY(6px);
 }
 
-/* ---------- Certificate card hover ----------
-   Subtle scale + border/glow intensify on the clickable image frame
-   (implementation prompt Section 9: ~1.02-1.04 scale, transform only). Base
-   glow matches the restrained ProjectCardSurface "other" language. */
 .cert-card-media {
   cursor: zoom-in;
   box-shadow:
@@ -1968,11 +1483,6 @@
   outline-offset: 3px;
 }
 
-/* ---------- 23.3 Certificate preview lightbox ----------
-   Opening: backdrop fade + certificate scale ~0.85-0.9 -> 1, ~300-450ms
-   ease-out. Closing: its own short exit keyframe (not the open keyframe
-   reversed — same reasoning as .exp-panel-content-close), ~250-400ms,
-   driven by CertificateLightbox.jsx's `closing` state. */
 .cert-lightbox {
   position: fixed;
   inset: 0;
@@ -2008,12 +1518,7 @@
   position: relative;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.7);
-  background: rgba(8, 11, 18, 0.6);
-  box-shadow:
-    0 0 30px 2px rgba(96, 165, 250, 0.55),
-    0 0 90px 14px rgba(96, 165, 250, 0.3),
-    0 24px 60px rgba(0, 0, 0, 0.5);
-  padding: 10px;
+  line-height: 0;
   animation: cert-lightbox-scale-in 360ms cubic-bezier(0.22, 0.9, 0.32, 1);
 }
 .cert-lightbox-frame-closing {
@@ -2045,7 +1550,7 @@
   max-height: 82vh;
   width: auto;
   height: auto;
-  border-radius: 14px;
+  border-radius: 19px;
   object-fit: contain;
 }
 .cert-lightbox-placeholder {
@@ -2084,21 +1589,6 @@
   outline-offset: 3px;
 }
 
-/* ================================================================
-   26. Global page time-warp (owner spec + correction pass;
-       timeline in src/motion/pageWarp.js)
-   ================================================================
-   Mental model: ONE centred warp + full-page zoom out + full-page zoom in +
-   a visible, subtly bent Navbar. The streak field is drawn by
-   WarpCanvas.jsx; this block owns the layers and the content motion. */
-
-/* True viewport layer. Fixed and full-screen, above page content, but
-   BELOW the sticky Navbar (z-50): the Navbar stays visible and readable for
-   the whole transition and its translucent, blurred panel shows the streaks
-   passing behind it. The canvas is rendered as a sibling of the shell, so
-   nothing clips it — RootLayout, page max-width, or transformed ancestors.
-   Fireflies and the Navbar glow live inside the header (z-50) and are never
-   covered. */
 .page-warp-canvas {
   position: fixed;
   inset: 0;
@@ -2107,22 +1597,17 @@
   opacity: 0;
 }
 
-/* ---------- Pre-warp: ONE full-page zoom out (PRE_WARP_MS = 180) ----------
-   The current page is one spatial layer receding into depth, with a whisper
-   of blur, on an accelerating curve into the warp. Held through the warp so
-   the page under the cover never pops back before the swap. The origin is
-   the viewport centre in page space (--warp-origin-y) so the recession
-   happens around what is on screen.
-
-   Depth pass: the recession deviation was 0.03 (scale 0.97); the owner asked
-   for ~3x more noticeable zoom depth without shrinking the page into a tiny
-   floating rectangle, so this lands at 0.92 — inside the owner's suggested
-   0.92-0.95 band and close to a literal 3x (0.09) deviation. */
 .warp-stage {
   transform-origin: 50% var(--warp-origin-y, 50%);
 }
+
+[data-warp-depth] {
+  transform-origin: var(--warp-depth-origin, 50% var(--warp-origin-y, 50%));
+}
 .warp-stage[data-warp-phase='engage'],
-.warp-stage[data-warp-phase='warp'] {
+.warp-stage[data-warp-phase='warp'],
+.warp-stage[data-warp-phase='engage']:has([data-warp-scene]) [data-warp-depth],
+.warp-stage[data-warp-phase='warp']:has([data-warp-scene]) [data-warp-depth] {
   transform: scale(0.92);
   filter: blur(0.6px);
   transition:
@@ -2130,13 +1615,18 @@
     filter 270ms cubic-bezier(0.4, 0, 0.9, 0.4);
 }
 
-/* ---------- Post-warp: ONE full-page zoom in (ARRIVE_MS = 220) ----------
-   The destination is already rendered, at scrollTop 0, in its normal layout
-   under the cover; as the cover clears it zooms in from slightly receded to
-   scale 1 on a confident ease-out. No fade, no bounce. No transform remains
-   once the phase clears. Matches the pre-warp depth above (0.92 -> 1). */
-.warp-stage[data-warp-phase='arrive'] {
+.warp-stage[data-warp-phase='arrive'],
+.warp-stage[data-warp-phase='arrive']:has([data-warp-scene]) [data-warp-depth] {
   animation: warp-arrive 330ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.warp-stage[data-warp-phase='engage']:has([data-warp-scene]),
+.warp-stage[data-warp-phase='warp']:has([data-warp-scene]),
+.warp-stage[data-warp-phase='arrive']:has([data-warp-scene]) {
+  transform: none;
+  filter: none;
+  animation: none;
+  transition: none;
 }
 @keyframes warp-arrive {
   from {
@@ -2149,28 +1639,11 @@
   }
 }
 
-/* ---------- Navbar bend ----------
-   The Navbar never disappears; instead spacetime distorts around it. Pinned
-   at its top edge, it tilts a few degrees into depth and compresses a hair
-   through the core warp, then returns as the destination arrives. Small
-   enough that every label stays crisp and readable; the fireflies ride the
-   same transform, so they keep chasing the destination item inside it. */
 .site-header {
   transform-origin: 50% 0;
   transition: transform 630ms cubic-bezier(0.4, 0, 0.6, 1);
 }
-/* Curvature pass #3 (correction — dial back #2): measured the same way as
-   the previous pass, with the same live-browser corner-marker harness
-   (top-edge-width vs bottom-edge-width taper). Previous peak
-   (perspective(480px) rotateX(31deg) scale(0.905)) measured ~7.0% taper —
-   too strong. Target was that value / 1.5 = ~4.7%; perspective(600px)
-   rotateX(25deg) scale(0.93) measured ~4.6% (ratio 0.66 against the
-   previous peak), landing on target. Lengthening the perspective distance
-   together with a smaller rotation is what pulls the curvature back
-   down — perspective alone doesn't scale it linearly, same as when it was
-   increased. Engage stays proportioned the same way it already was
-   (~0.42x of peak). Transition durations are untouched — only the amount
-   of bend changed, not its timing. */
+
 .site-header[data-warp-phase='engage'] {
   transform: perspective(600px) rotateX(10.5deg) scale(0.97);
 }
@@ -2182,11 +1655,6 @@
   transition: transform 480ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ---------- Reduced motion ----------
-   No canvas, no depth, no Navbar bend: a quick crossfade around the same
-   route swap (REDUCED in pageWarp.js). The global reduced-motion override
-   collapses these durations further still; the class hand-off keeps the
-   swap invisible either way. */
 .warp-stage[data-warp-phase='reduced-out'] {
   opacity: 0;
   transition: opacity 140ms ease-in;

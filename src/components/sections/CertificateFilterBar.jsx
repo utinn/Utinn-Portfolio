@@ -1,19 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { certificateFilters } from '../../data/certificates'
 
-/**
- * Certificates Page category filter (owner addition on top of the Figma
- * grid — see the Certificates implementation prompt; category list and
- * default "All" state are also confirmed in INTERACTION_SPEC.md 24.2/24.3).
- * Elegant category tabs, not bulky buttons, with a single sliding underline
- * indicator that measures the active tab's DOM position and animates to it —
- * the same technique Navbar.jsx uses for its active-page glow.
- *
- * ANIMATION_SPEC.md 23.2 "Active Filter Indicator": ~200-350ms smooth
- * ease-in-out. The active/inactive/hover visual language (brighter + blue +
- * glow vs. muted, non-color-only distinction via bold weight) is the owner's
- * explicit spec in the implementation prompt.
- */
 export default function CertificateFilterBar({ activeCategory, onChange }) {
   const listRef = useRef(null)
   const tabRefs = useRef({})

@@ -1,10 +1,3 @@
-/**
- * Stand-in for a content image whose real asset hasn't been supplied yet
- * (CLAUDE.md Section 11 "Temporary Image Policy" / Section 23 content
- * integrity — no stock photo is substituted for a specific real person,
- * event, or screenshot). Keeps the container's intended aspect ratio so
- * swapping in the real image later never shifts layout.
- */
 export default function ImagePlaceholder({ label, className = '' }) {
   return (
     <div

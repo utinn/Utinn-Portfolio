@@ -1,26 +1,3 @@
-/**
- * Achievements Page carousel content (ANIMATION_SPEC.md 21,
- * INTERACTION_SPEC.md 22).
- *
- * Shape: { id, title, issuer, date, description, image, alt }
- *
- * `image` is the achievement's certificate/award artwork. Drop the real file
- * into `src/assets/images/achievements/` using the CLAUDE.md Section 11
- * naming convention (e.g. `Achievement_Fortex6.png`), import it here, and
- * assign it — nothing else has to change. Until then `image: null` renders the
- * shared ImagePlaceholder at the exact same container size, so swapping the
- * real asset in never shifts the layout.
- *
- * CONTENT STATUS
- * - Item 1 is transcribed verbatim from the approved Figma frame
- *   (docs/figma-reference/achievements/AchivementsPage.png).
- * - Items 2-5 are PLACEHOLDERS. The Figma frame shows two further
- *   achievements, but both are clipped by the frame edge and only partially
- *   legible, so their copy is deliberately NOT reconstructed here
- *   (CLAUDE.md Section 23 — never fabricate credentials). Replace the title /
- *   issuer / date / description strings below with the real content.
- */
-
 import img1 from '../assets/images/achievements/img1.png'
 import img2 from '../assets/images/achievements/img2.png'
 import img3 from '../assets/images/achievements/img3.png'

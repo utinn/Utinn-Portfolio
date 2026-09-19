@@ -4,23 +4,6 @@ import DimensionStage from '../common/DimensionStage'
 import { useTeleport } from '../../hooks/useTeleport'
 import { returnCurtains } from '../../data/projectCurtains'
 
-/**
- * Shared shell for the two category pages (INTERACTION_SPEC.md Sections 14 &
- * 15). Game and AI differ only in which edge their return curtain sits on and
- * which tone it carries, so the wiring lives here once instead of being
- * duplicated across both pages.
- *
- * DEPARTURE (owner correction pass): the return curtain carries no arrow glyph
- * and no label, where ANIMATION_SPEC.md 18.12 and INTERACTION_SPEC.md 14.2 /
- * 15.2 call for a directional arrow. The gradient region is now the whole
- * affordance — it still glows, leans and emits particles on hover, and it is
- * still a real link with an accessible name, so neither the navigation nor its
- * discoverability by assistive tech depended on the removed glyph.
- *
- * ASSUMPTION (not specified): the return curtain wears the tone of the world
- * it sits in (neutral on Game, blue on AI) rather than a shared neutral, so it
- * reads as part of the current category rather than pasted on.
- */
 export default function ProjectCategoryStage({ category, children }) {
   const { state } = useLocation()
   const { teleport, startTeleport } = useTeleport()
@@ -28,15 +11,13 @@ export default function ProjectCategoryStage({ category, children }) {
 
   return (
     <DimensionStage isEntering={Boolean(state?.teleportEnter)} isExiting={teleport?.phase === 'cover'}>
-      {/* Keeps page content clear of the fixed return curtain — the rule
-          itself lives in curtains.css beside the curtain it clears, so both
-          read the same --return-curtain-hit token. */}
-      <div className="projects-page-body" data-curtain-edge={curtain.edge}>
+      <div className="projects-page-body" data-curtain-edge={curtain.edge} data-warp-depth="">
         {children}
       </div>
 
       <CurtainSurface
         className="curtain--return"
+        isWarpScene
         to="/projects"
         tone={curtain.tone}
         edge={curtain.edge}

@@ -10,11 +10,6 @@ import Certificates from './pages/Certificates'
 import Contact from './pages/Contact'
 import NotFound from './pages/NotFound'
 
-/**
- * Route tree per CLAUDE.md Section 9 and INTERACTION_SPEC.md Section 5.1.
- * Game/AI Projects are child routes under Projects, not primary Navbar
- * items (INTERACTION_SPEC.md 5.4).
- */
 function App() {
   return (
     <Routes>

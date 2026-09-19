@@ -5,16 +5,6 @@ import SectionHeader, { SECTION_CONTENT_DELAY_MS } from '../common/SectionHeader
 import PageContainer from '../layout/PageContainer'
 import FeaturedWorkCard from './FeaturedWorkCard'
 
-/**
- * Home Featured Works section (CLAUDE.md Section 9). Heading/subtitle
- * transcribed verbatim from the approved Figma reference
- * (docs/figma-reference/home/Home_FeaturedWorks.png).
- *
- * Entrance (owner correction pass): the shared Home header cascade (title
- * rises -> caption rises) runs first, then the two project cards converge
- * inward from opposite sides. One useScrollReveal() call drives every stage
- * so they share a trigger and only play once per visit.
- */
 export default function FeaturedWorks() {
   const { ref, isVisible } = useScrollReveal()
 

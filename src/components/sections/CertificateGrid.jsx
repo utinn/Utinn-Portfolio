@@ -3,36 +3,36 @@ import { certificates } from '../../data/certificates'
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion'
 import CertificateCard from './CertificateCard'
 
-// ANIMATION_SPEC.md 23.2 "Grid Filtering Transition" recommends a fast,
-// restrained fade — certificates that no longer match fade out briefly, the
-// grid updates, then matching certificates fade in. Implemented as one
-// whole-grid crossfade rather than per-card enter/exit bookkeeping, which
-// keeps the swap simple while still reading as "fade out -> update -> fade
-// in" (CLAUDE.md Section 19 anti-over-engineering).
 const FADE_OUT_MS = 160
 
-// Initial-entrance stagger (ANIMATION_SPEC.md Section 8: ~60-120ms between
-// items, capped so large collections don't chain indefinitely).
 const STAGGER_MS = 80
 const MAX_STAGGER_ITEMS = 6
+
+const INITIAL_BATCH_SIZE = 9
+const BATCH_SIZE = 9
+const BATCH_ROOT_MARGIN = '600px'
 
 export default function CertificateGrid({ activeCategory, onOpenCertificate, revealed = true }) {
   const prefersReducedMotion = usePrefersReducedMotion()
   const [displayCategory, setDisplayCategory] = useState(activeCategory)
   const [isFading, setIsFading] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH_SIZE)
   const timeoutRef = useRef(null)
+  const sentinelRef = useRef(null)
 
   useEffect(() => {
     if (activeCategory === displayCategory) return undefined
 
     if (prefersReducedMotion) {
       setDisplayCategory(activeCategory)
+      setVisibleCount(INITIAL_BATCH_SIZE)
       return undefined
     }
 
     setIsFading(true)
     timeoutRef.current = setTimeout(() => {
       setDisplayCategory(activeCategory)
+      setVisibleCount(INITIAL_BATCH_SIZE)
       setIsFading(false)
     }, FADE_OUT_MS)
 
@@ -40,6 +40,25 @@ export default function CertificateGrid({ activeCategory, onOpenCertificate, rev
   }, [activeCategory, displayCategory, prefersReducedMotion])
 
   const items = displayCategory === 'all' ? certificates : certificates.filter((cert) => cert.category === displayCategory)
+  const visibleItems = items.slice(0, visibleCount)
+  const hasMore = visibleCount < items.length
+
+  useEffect(() => {
+    if (!hasMore) return undefined
+    const sentinel = sentinelRef.current
+    if (!sentinel) return undefined
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((count) => Math.min(count + BATCH_SIZE, items.length))
+        }
+      },
+      { rootMargin: BATCH_ROOT_MARGIN },
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore, items.length, visibleCount])
 
   if (items.length === 0) {
     return (
@@ -52,20 +71,23 @@ export default function CertificateGrid({ activeCategory, onOpenCertificate, rev
   }
 
   return (
-    <div
-      className={`cert-grid-transition grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 ${
-        isFading ? 'cert-grid-transition-hidden' : ''
-      }`}
-    >
-      {items.map((certificate, index) => (
-        <CertificateCard
-          key={certificate.id}
-          certificate={certificate}
-          onOpen={onOpenCertificate}
-          isVisible={revealed}
-          revealDelayMs={Math.min(index, MAX_STAGGER_ITEMS) * STAGGER_MS}
-        />
-      ))}
-    </div>
+    <>
+      <div
+        className={`cert-grid-transition grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3 lg:gap-x-14 ${
+          isFading ? 'cert-grid-transition-hidden' : ''
+        }`}
+      >
+        {visibleItems.map((certificate, index) => (
+          <CertificateCard
+            key={certificate.id}
+            certificate={certificate}
+            onOpen={onOpenCertificate}
+            isVisible={revealed}
+            revealDelayMs={Math.min(index, MAX_STAGGER_ITEMS) * STAGGER_MS}
+          />
+        ))}
+      </div>
+      {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-px w-full" />}
+    </>
   )
 }

@@ -1,13 +1,3 @@
-/**
- * About Me image carousel (ANIMATION_SPEC.md 15.1, INTERACTION_SPEC.md 9).
- * Manual-only, 5 images. Data-driven so content can change without touching
- * the carousel component.
- *
- * Edit the `title` and `caption` values below to update carousel copy.
- * Current values are temporary placeholders provided by the project owner.
- *
- * Shape: { id, image, alt, title, caption }
- */
 import img1 from '../assets/images/home/about_me/img1.png'
 import img2 from '../assets/images/home/about_me/img2.jpeg'
 import img3 from '../assets/images/home/about_me/img3.jpg'

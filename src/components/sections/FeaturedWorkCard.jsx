@@ -3,16 +3,6 @@ import ImagePlaceholder from '../common/ImagePlaceholder'
 import Label from '../common/Label'
 import ProjectStatus from '../common/ProjectStatus'
 
-/**
- * Single Featured Work card (Home -> Featured Works). Status radar pulse:
- * ANIMATION_SPEC.md 16.1. Screenshot moving outline shine: ANIMATION_SPEC.md
- * 17. GitHub/Live Demo destinations: INTERACTION_SPEC.md 10.1 — rendered
- * disabled when no real URL has been supplied yet (see projects.js).
- *
- * `revealSide`/`isVisible` drive the converging card entrance (owner
- * correction pass, animations.css `.fw-card-reveal*`) — the parent
- * FeaturedWorks section owns the single scroll trigger both cards share.
- */
 export default function FeaturedWorkCard({ project, revealSide = 'left', isVisible = true, revealDelayMs = 0 }) {
   const primaryImage = project.images?.find((image) => image.src)
 
@@ -34,9 +24,6 @@ export default function FeaturedWorkCard({ project, revealSide = 'left', isVisib
         ))}
       </div>
 
-      {/* outline-shine's glow ring must extend slightly outside its own box
-          (ANIMATION_SPEC.md 17), so it can't share an element with the
-          overflow-hidden that crops the screenshot — split into two boxes. */}
       <div className="outline-shine mt-5 rounded-[var(--radius-card)]">
         <div className="aspect-[16/10] overflow-hidden rounded-[var(--radius-card)] border border-white/15">
           {primaryImage?.src ? (

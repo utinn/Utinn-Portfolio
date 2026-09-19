@@ -2,23 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import ImagePlaceholder from '../common/ImagePlaceholder'
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion'
 
-// ANIMATION_SPEC.md 23.3 closing-animation duration (250-400ms) — kept in
-// sync with the CSS keyframe durations in animations.css.
 const CLOSE_MS = 260
 
-/**
- * Certificate preview lightbox (INTERACTION_SPEC.md Section 25,
- * ANIMATION_SPEC.md Section 23.3). Only one preview is ever open at a time
- * because the page keeps a single `activeCertificate` in state (Certificates.jsx)
- * rather than per-card open flags (25.2).
- *
- * Unlike AchievementLightbox (an unspecified owner add-on that just
- * unmounts), this page's closing motion IS explicitly specified, so closing
- * runs its own short exit animation before unmounting instead of vanishing
- * instantly — `shouldRender`/`closing` track that; the last-seen certificate
- * is held in a ref so the image doesn't disappear mid-exit while `certificate`
- * itself has already gone back to null.
- */
 export default function CertificateLightbox({ certificate, open, onClose }) {
   const [shouldRender, setShouldRender] = useState(open)
   const [closing, setClosing] = useState(false)
@@ -62,8 +47,6 @@ export default function CertificateLightbox({ certificate, open, onClose }) {
     }
     document.addEventListener('keydown', handleKeyDown)
 
-    // INTERACTION_SPEC.md 25.6 — prevent background scroll while open,
-    // restore whatever the page had (not assumed empty) once it closes.
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
@@ -81,7 +64,7 @@ export default function CertificateLightbox({ certificate, open, onClose }) {
   const item = lastCertificateRef.current
   if (!item) return null
 
-  const { title, issuer, issueDate, image, alt } = item
+  const { title, issuer, issueDate, fullImage, alt } = item
 
   return (
     <div
@@ -103,8 +86,13 @@ export default function CertificateLightbox({ certificate, open, onClose }) {
         >
           &times;
         </button>
-        {image ? (
-          <img src={image} alt={alt || `${title} — ${issuer}, ${issueDate}`} className="cert-lightbox-image" />
+        {fullImage ? (
+          <img
+            src={fullImage}
+            alt={alt || `${title} — ${issuer}, ${issueDate}`}
+            decoding="async"
+            className="cert-lightbox-image"
+          />
         ) : (
           <div className="cert-lightbox-placeholder">
             <ImagePlaceholder label={alt || `${title} certificate coming soon`} />

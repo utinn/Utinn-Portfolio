@@ -6,36 +6,6 @@ import img5 from '../assets/images/experiences/others/img5.jpg'
 import img6 from '../assets/images/experiences/others/img6.jpg'
 import img7 from '../assets/images/experiences/others/img7.png'
 
-/**
- * "More Experiences" conveyor images on the dedicated Experiences Page
- * (ANIMATION_SPEC.md 20.13, INTERACTION_SPEC.md 21). Captions must come from
- * this data, never inferred from filenames at runtime (INTERACTION_SPEC.md 21.6).
- *
- * PLACEHOLDER CONTENT (owner instruction): seven items carrying the agreed
- * Title1/Org1/Date1/Capt1 … Title7/Org7/Date7/Capt7 stand-ins so layout, motion
- * and hover behaviour can be built and reviewed before the real entries exist.
- * The approved frame shows a title, a smaller "organization · date" metadata
- * line, the image, then a longer caption below it, so all four fields stay
- * here and only their values need replacing.
- *
- * To finish an item later: set `title`/`organization`/`date`/`caption` to the
- * real text, drop the photo in src/assets/images/experiences/ and import it as
- * `image`, then write a real `alt`. `image: null` renders the shared
- * ImagePlaceholder frame, so no unrelated stock photo ever stands in for a
- * real event (CLAUDE.md Section 23).
- *
- * Shape: { id, image, alt, title, organization, date, caption }
- */
-// export const moreExperiencesConveyorItems = Array.from({ length: 7 }, (_, i) => ({
-//   id: `more-experience-${i + 1}`,
-//   image: null,
-//   alt: '',
-//   title: `Title${i + 1}`,
-//   organization: `Org${i + 1}`,
-//   date: `Date${i + 1}`,
-//   caption: `Capt${i + 1}`,
-// }))
-
 export const moreExperiencesConveyorItems = [
   {
     id: 'more-experience-1',

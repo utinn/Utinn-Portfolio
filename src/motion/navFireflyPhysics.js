@@ -1,52 +1,13 @@
-/**
- * ============================================================================
- * NAVBAR FIREFLY MOTION — the one place to tune the active-route particles.
- * ============================================================================
- *
- * Owner motion-polish pass: the fireflies are no longer CSS keyframes riding
- * inside the sliding indicator (which moved them as one rigid group with one
- * easing). Each firefly is now its own tiny damped spring chasing a target
- * point, integrated per frame in NavFireflies.jsx. This file holds the
- * tuning, the per-particle trait generator, and the pure `step()` integrator
- * so the maths can be exercised outside the browser.
- *
- * Units: px, seconds. All ranges are [min, max]; each firefly rolls its own
- * value once, at creation, so variation is stable and never re-randomised.
- */
 export const NAV_FIREFLIES = {
-  /** How many fireflies orbit the active item. */
   count: 9,
 
-  /* ---------- Resting cloud (where they settle around the label) ----------
-     Each firefly owns a fixed offset from the active item's centre, drawn on a
-     loose ellipse that follows the label's own proportions, so the cloud
-     surrounds the text rather than sitting on it. `padX` extends the ellipse
-     past the label box sideways (kept small so neighbouring labels stay
-     clear); `overflowY` extends it past the box vertically, which is where
-     there is only the navbar edge to cross. `radius` is how far along that
-     ellipse a firefly may rest (1 = the rim). */
   padX: 4,
   overflowY: 12,
   radius: [0.45, 1],
 
-  /* ---------- Ambient drift (idle motion once settled) ----------
-     Two incommensurate sines per axis give irregular arcs instead of ellipses.
-     The SAME amplitude is used on both axes — the owner's "horizontal ≈
-     vertical" requirement — so the cloud breathes evenly in 2D. */
   driftPx: [6, 9],
   driftHz: [0.07, 0.19],
 
-  /* ---------- Chase (route change) ----------
-     Each firefly is a damped spring: acceleration toward its target scaled by
-     `stiffness`, velocity bled by `damping` (exponential, frame-rate safe).
-     The two caps are what shape the "creature" feel:
-       maxAccel  limits how hard it can push off, so a chase always BEGINS
-                 slower and visibly winds up (a raw spring over 700px would
-                 hit top speed on the first frame).
-       maxSpeed  the cruise ceiling on long jumps (Home -> Contact).
-     `settleRadius` is where the chase hands over to the orbit: inside it the
-     damping rises to `settleDamping`, so arrival decelerates and the small
-     overshoot dies within a couple of oscillations instead of ringing. */
   stiffness: [55, 75],
   damping: [2.2, 3.0],
   settleDamping: [12, 15],
@@ -54,27 +15,29 @@ export const NAV_FIREFLIES = {
   maxAccel: [2600, 4200],
   maxSpeed: [880, 1250],
 
-  /** Reaction lag before a firefly "notices" the new target, seconds. */
   reaction: [0, 0.24],
 
-  /* ---------- Look ---------- */
   sizePx: [2, 3.4],
-  /** Per-firefly halo multiplier (read by animations.css as --ff-glow). */
   glow: [0.8, 1.3],
-  /** Opacity shimmer range and per-cycle duration (CSS keyframe, seconds). */
   opacity: [0.3, 1],
   shimmerSec: [2.6, 4.8],
 
-  /** Reduced motion: no springs, no drift — just a short CSS ease to the offset. */
   reducedMotionMs: 300,
 }
 
-/* Blue-white palette, weighted toward the pale end: white-hot cores with blue
-   haloes rather than a flat blue smear. */
+export const CV_FIREFLIES = {
+  ...NAV_FIREFLIES,
+  count: 4,
+  padX: 3,
+  overflowY: 6,
+  driftPx: [3, 5],
+  sizePx: [1.6, 2.6],
+  glow: [0.6, 0.9],
+  opacity: [0.25, 0.85],
+}
+
 const COLORS = ['#ffffff', '#ffffff', '#eff6ff', '#dbeafe', '#bfdbfe', '#93c5fd', '#60a5fa']
 
-/* Small seeded PRNG (mulberry32): identical cloud on every mount, no
-   Math.random() in render. */
 export function mulberry32(seed) {
   let a = seed >>> 0
   return () => {
@@ -88,12 +51,6 @@ export function mulberry32(seed) {
 
 const between = (rand, [min, max]) => min + rand() * (max - min)
 
-/**
- * Rolls every firefly's fixed traits. Rest offsets are drawn evenly around
- * the full circle (angle uniform, radius in `radius`) so left/right/above/
- * below/diagonal are all represented, then stretched to the label's aspect
- * at step time — asymmetric and organic, but balanced.
- */
 export function createFireflies(seed, config = NAV_FIREFLIES) {
   const rand = mulberry32(seed)
   return Array.from({ length: config.count }, (_, i) => {
@@ -101,11 +58,8 @@ export function createFireflies(seed, config = NAV_FIREFLIES) {
     const r = between(rand, config.radius)
     return {
       key: i,
-      // Rest offset as unit-ellipse coordinates; scaled by the live label
-      // size in step(), so the cloud follows each item's width.
       ux: Math.cos(angle) * r,
       uy: Math.sin(angle) * r,
-      // Ambient drift: same amplitude both axes, four independent sines.
       drift: between(rand, config.driftPx),
       f1: between(rand, config.driftHz) * Math.PI * 2,
       f2: between(rand, config.driftHz) * Math.PI * 2,
@@ -115,21 +69,18 @@ export function createFireflies(seed, config = NAV_FIREFLIES) {
       p2: rand() * Math.PI * 2,
       p3: rand() * Math.PI * 2,
       p4: rand() * Math.PI * 2,
-      // Chase character.
       stiffness: between(rand, config.stiffness),
       damping: between(rand, config.damping),
       settleDamping: between(rand, config.settleDamping),
       maxAccel: between(rand, config.maxAccel),
       maxSpeed: between(rand, config.maxSpeed),
       reaction: between(rand, config.reaction),
-      // Look.
       size: between(rand, config.sizePx),
       color: COLORS[Math.floor(rand() * COLORS.length)],
       glow: between(rand, config.glow),
       opacityMax: config.opacity[1] - rand() * 0.2,
       shimmerSec: between(rand, config.shimmerSec),
       shimmerDelay: -rand() * 4,
-      // Live state (mutated by step()).
       x: 0,
       y: 0,
       vx: 0,
@@ -142,10 +93,6 @@ export function createFireflies(seed, config = NAV_FIREFLIES) {
   })
 }
 
-/**
- * Where a firefly wants to be right now: the active item's centre plus its
- * own rest offset (stretched to the label's aspect) plus ambient drift.
- */
 export function desiredPoint(p, target, t, config = NAV_FIREFLIES) {
   const rx = target.w / 2 + config.padX
   const ry = target.h / 2 + config.overflowY
@@ -154,13 +101,8 @@ export function desiredPoint(p, target, t, config = NAV_FIREFLIES) {
   return { x: target.x + p.ux * rx + dx, y: target.y + p.uy * ry + dy }
 }
 
-/**
- * Hands a firefly a new target. It keeps chasing its previous one until its
- * own reaction lag elapses, which is what staggers departures.
- */
 export function retarget(p, target, now, config = NAV_FIREFLIES) {
   if (!p.placed) {
-    // First placement: materialise in the cloud, no chase from (0,0).
     p.target = target
     const want = desiredPoint(p, target, now, config)
     p.x = want.x
@@ -172,14 +114,6 @@ export function retarget(p, target, now, config = NAV_FIREFLIES) {
   p.noticeAt = now + p.reaction
 }
 
-/**
- * Advances one firefly by `dt` seconds. Pure integrator — mutates `p` only.
- *
- *   v += clamp(k * (desired - pos), maxAccel) * dt
- *   v  = clamp(v, maxSpeed)
- *   v *= exp(-damping * dt)          (damping rises inside settleRadius)
- *   pos += v * dt
- */
 export function step(p, now, dt, config = NAV_FIREFLIES) {
   if (p.pendingTarget && now >= p.noticeAt) {
     p.target = p.pendingTarget

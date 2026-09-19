@@ -1,35 +1,3 @@
-/*
- * Projects curtain navigation system.
- *
- * Spec sources:
- *   - ANIMATION_SPEC.md Section 18 (curtain motion, hover particles,
- *     navigation transition, reduced motion)
- *   - INTERACTION_SPEC.md Sections 12-16 (curtain interaction, lock, touch)
- *
- * CORRECTION PASS — three points now deliberately depart from the written
- * spec on the owner's direct instruction (CLAUDE.md Section 26 priority 1
- * over priority 3). Each is marked DEPARTURE where it occurs:
- *   1. Return curtains carry no arrow glyph (spec 18.12 / INTERACTION 14.2,
- *      15.2 ask for an arrow).
- *   2. Hover particles are numerous and directional (spec 18.6 asks for a
- *      sparse, gently drifting field).
- *   3. Navigation is a particle teleport flood, not a perspective rotation
- *      (spec 18.8).
- *
- * MEASURED FACTS — the gradient stops are sampled from the approved concept
- * sketch docs/figma-reference/projects/CurtainSketch.png (1440x720, a purely
- * horizontal gradient). The stop POSITIONS have since been compressed toward
- * each outer edge so the two regions stop meeting in the middle (see the
- * center-void block below); the colors themselves are unchanged. Everything
- * else here — glow strength, tilt, timings, mask falloffs — is an
- * implementation inference from the written brief, not a measured value.
- */
-
-/* ---------- 18.2 Curtain surface ---------- */
-
-/* Stops are always authored OUTER -> INNER (identity color -> center void)
-   so one --curtain-angle can point a curtain at any screen edge, and the same
-   angle drives the body mask that dissolves its inner edge. */
 .curtain {
   --curtain-tilt: 0deg;
   --curtain-origin: 50% 50%;
@@ -44,30 +12,21 @@
   transition: opacity 300ms ease-out;
 }
 
-/* Game: sampled at x = 2 / 150 / 300 / 450 of the 0-605px left region. */
 .curtain[data-tone='game'] {
   --curtain-stops: #45474c 0%, #32343a 20%, #1f2228 42%, #0c0f16 64%, #080b12 84%;
   --curtain-fade-start: 72%;
   --curtain-glow: rgba(203, 213, 225, 0.3);
 }
 
-/* AI: sampled at x = 1437 / 1380 / 1250 / 1100 / 950 / 860 / 760 / 680 of the
-   605-1440px right region, listed outer-first (reversed from sampling order).
-   The blue identity comes from that sampling, not invented. */
 .curtain[data-tone='ai'] {
   --curtain-stops: #6a99be 0%, #608bac 7%, #496a84 22%, #2f4456 38%, #22313f 54%, #1b2734 66%, #141c27 77%,
     #0e131c 85%, #080b12 92%;
   --curtain-fade-start: 80%;
   --curtain-glow: rgba(96, 165, 250, 0.42);
-  /* AI reads as the primary category even while idle — a permanently present
-     but restrained ambient glow the neutral Game curtain does not get. */
+
   --curtain-glow-idle: 0.32;
 }
 
-/* Edge = which screen edge this curtain's identity color sits against. It
-   drives the gradient direction, the body mask, the sheen anchor, the lean
-   direction, and the pivot (always the INNER edge, so the outer edge does the
-   moving and the center void stays visually planted). */
 .curtain[data-edge='left'] {
   --curtain-angle: 90deg;
   --curtain-outer-x: 0%;
@@ -81,9 +40,6 @@
   --curtain-origin: 0% 50%;
 }
 
-/* Stacked (below lg) the two landing panels meet horizontally instead of
-   vertically, so the same curtains re-point their gradient, mask, sheen and
-   pivot at the top and bottom edges. Same design, adapted layout. */
 @media (max-width: 1023px) {
   .curtain--panel[data-edge='left'] {
     --curtain-angle: 180deg;
@@ -99,8 +55,6 @@
   }
 }
 
-/* The plane carries every transform so the body, its glow, the local
-   particles and the floating label all lean as one dimensional sheet. */
 .curtain__plane {
   position: absolute;
   inset: 0;
@@ -109,13 +63,6 @@
   transition: transform 320ms ease-out;
 }
 
-/* ---------- Correction C: no bounding box ----------
-   The gradient body is masked so its INNER edge dissolves into the page
-   background instead of stopping at a rectangle edge. The mask runs along the
-   same axis as the gradient, so it re-points automatically when the layout
-   stacks. Because a mask also clips anything the element paints outside its
-   border box, the curtain's glow deliberately lives on its own unmasked
-   element below rather than as a box-shadow here. */
 .curtain__body {
   position: absolute;
   inset: 0;
@@ -130,9 +77,6 @@
   transition: filter 320ms ease-out;
 }
 
-/* Material polish: one faint highlight anchored at the outer edge plus a very
-   low contrast top light. Deliberately far short of frosted glass — the
-   gradient composition stays the primary visual language. */
 .curtain__sheen {
   position: absolute;
   inset: 0;
@@ -146,10 +90,6 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 26%);
 }
 
-/* Glow, separated from the curtain body (correction C). Unmasked and
-   extending past the curtain's own box, so it blooms outward into the page
-   instead of ending on a rectangle edge. Radial by construction — no blur
-   filter needed on a viewport-sized element. */
 .curtain__glow {
   position: absolute;
   inset: -12% -10%;
@@ -161,7 +101,6 @@
     transform 320ms ease-out;
 }
 
-/* ---------- 18.4 / 18.5 Hover lean + glow ---------- */
 .curtain[data-active] {
   z-index: 2;
 }
@@ -175,20 +114,6 @@
   opacity: 1;
 }
 
-/* 18.7 click response — OWNER CORRECTION (2026-09-07): this used to give the
-   clicked curtain a brief extra lean/brighten/scale during the `charge` phase,
-   ahead of the cover sweep. That moved the curtain's own label and figure
-   (both descendants of .curtain__plane) independently of the rest of the
-   page, before any cover had actually reached them — exactly the premature
-   movement the owner asked to remove. The landing page must stay visually
-   frozen (in whatever hover pose it already had) until the opaque curtain
-   overlay (TeleportOverlay, z-index 100) covers it. `data-charging` is still
-   set by CurtainSurface for the lock window; it intentionally carries no
-   visual rule here anymore. Restore the three declarations below (transform /
-   filter / transform) to bring the pulse back. */
-
-/* The unhovered curtain steps back just enough to focus the active one.
-   Intentionally shallow — it must never read as hidden or disabled. */
 .curtain[data-quiet] {
   opacity: 0.88;
 }
@@ -198,7 +123,6 @@
   outline-offset: -10px;
 }
 
-/* ---------- 18.2 Floating curtain content ---------- */
 .curtain__content {
   position: relative;
   z-index: 1;
@@ -208,16 +132,10 @@
   align-items: center;
   justify-content: center;
   padding-block: 1.5rem;
-  /* Sketch: 44px between label baseline and figure top, at 720px tall. */
+
   gap: clamp(1.25rem, 4svh, 2.75rem);
 }
 
-/* Side by side, both labels must share one baseline (the sketch puts both at
-   y=192 of 720). Centering each panel's own block would not do that, because
-   the two figures are deliberately different heights — so on desktop the
-   blocks are top-aligned at the sketch's proportional offset instead, and the
-   figures are free to end at different depths exactly as the sketch shows.
-   Stacked, each panel centers its own block again. */
 @media (min-width: 1024px) {
   .curtain__content {
     justify-content: flex-start;
@@ -225,10 +143,23 @@
   }
 }
 
-/* Label size: the sketch's cap height and label widths (363px for
-   "<<< Game Projects", 288px for "AI Projects >>>" at 1440) resolve to
-   roughly 40-44px, so the site's H1 step is the closest existing token.
-   Provisional — the sketch is a composition reference, not a Figma frame. */
+@media (min-width: 1024px) {
+  .curtain--panel[data-edge='left'] .curtain__content {
+    --warp-depth-origin: 119.048% 50%;
+  }
+  .curtain--panel[data-edge='right'] .curtain__content {
+    --warp-depth-origin: 13.793% 50%;
+  }
+}
+@media (max-width: 1023px) {
+  .curtain--panel[data-edge='left'] .curtain__content {
+    --warp-depth-origin: 50% 119.048%;
+  }
+  .curtain--panel[data-edge='right'] .curtain__content {
+    --warp-depth-origin: 50% 13.793%;
+  }
+}
+
 .curtain__label {
   display: inline-flex;
   align-items: baseline;
@@ -270,12 +201,6 @@
   }
 }
 
-/* Supporting category visual. Game and AI share one square footprint —
-   owner correction: the sketch's original boxes (Game 220x155, AI 200x284)
-   read as visually inconsistent, so both curtains now derive width,
-   aspect-ratio and max-height from this single rule instead of per-tone
-   values. Set in CSS, never by the source image, so dropping the real
-   artwork in later cannot move the layout (CLAUDE.md Section 11). */
 .curtain__figure {
   position: relative;
   overflow: hidden;
@@ -295,8 +220,7 @@
   object-fit: contain;
   object-position: center;
 }
-/* Until the real artwork is supplied the slot is held open, but quietly, so a
-   reserved box never competes with the category label. */
+
 .curtain__figure--placeholder {
   opacity: 0.45;
 }
@@ -308,21 +232,12 @@
   opacity: 0.6;
 }
 
-/* ---------- 18.6 Local hover particles ----------
-   DEPARTURE (correction E): the spec asks for a sparse, gently drifting
-   field; the owner asked for many particles visibly surging outward from the
-   hovered region. What is kept from the spec: travel stays unhurried,
-   spawns are staggered, and every particle fades out before the end of its
-   drift — energetic and spatial without reading as an explosion. */
 .curtain__particles {
   position: absolute;
   inset: 0;
   pointer-events: none;
   opacity: 0;
-  /* Fading the whole field out (rather than unmounting it immediately) is what
-     makes "existing particles fade naturally" on hover-out; the layer is
-     unmounted afterwards by CurtainSurface's own timer, so nothing keeps
-     looping once the curtain is idle. */
+
   transition: opacity 320ms ease-out;
 }
 .curtain__particles[data-visible] {
@@ -332,19 +247,11 @@
   position: absolute;
   border-radius: 999px;
   background: var(--particle-color, #ffffff);
-  /* Softer than before: the old 8px/2px halo turned a 3px dot into a ~20px
-     blob, which is what made the field read as "large" and cluttered. */
+
   box-shadow:
     0 0 6px 1.5px var(--particle-color, #ffffff),
     0 0 2px 0.5px var(--particle-color, #ffffff);
-  /* opacity + fill-mode fix the large static dots reported on hover. Each
-     particle is staggered by a delay of up to a few seconds, but the element
-     had no base opacity and no fill-mode — so for the whole of that delay it
-     sat at its BASE style: fully opaque, unmoved, at full glow, until its
-     animation finally began and snapped it to the 0% keyframe. On hover-in
-     that showed as a scatter of big motionless dots that then faded.
-     `backwards` makes the delay render the 0% keyframe (opacity 0) instead,
-     so a particle is simply invisible until it starts drifting. */
+
   opacity: 0;
   animation: curtain-particle-drift var(--particle-duration, 6s) ease-out infinite backwards;
   animation-delay: var(--particle-delay, 0s);
@@ -367,12 +274,6 @@
   }
 }
 
-/* ---------- Correction D: landing center void ----------
-   The two regions must not fuse into one shape. Three things create the gap:
-   each gradient now reaches #080B12 well before its column ends (stop
-   positions above), each body mask dissolves its inner edge, and this overlay
-   deepens the meeting point below the page background so it reads as empty
-   space rather than a butt joint. No divider line, no glow. */
 .curtain-seam {
   position: absolute;
   z-index: 3;
@@ -397,52 +298,10 @@
   }
 }
 
-/* The global background particle field is re-rendered above the curtains on
-   the landing page so the star field stays visible across both regions,
-   exactly as the approved sketch shows it. */
 .curtain-stars {
   z-index: 4;
 }
 
-/* ---------- Landing curtain entrance ----------
-   On opening /projects the two regions slide in from outside their final
-   positions and settle. Each starts displaced AWAY from the centre — Game
-   further left, AI further right — so the gap between them begins wider than
-   its final width and the centre void establishes itself as they arrive,
-   rather than being there from frame one.
-
-   The transform lives on `.curtain` (the grid item). `.curtain__plane` already
-   owns the hover tilt transform, so putting the entrance on a different
-   element keeps the two from overwriting each other. Neither affects layout,
-   so the final proportions are untouched.
-
-   One keyframe drives both axes through variables: side by side the panels
-   travel horizontally, and stacked they travel vertically instead (a
-   horizontal slide would carry them across each other rather than apart).
-
-   Easing is a strong ease-out with no overshoot — it decelerates into place
-   and stops. `backwards` fill, not `forwards`: the last keyframe already
-   equals the element's resting style, so letting the animation stop applying
-   leaves `[data-quiet]`'s opacity free to work afterwards.
-
-   ENTRANCE TIMING is configured here — duration and the small AI stagger.
-   JS decides only WHETHER it runs, never when.
-
-   The animation deliberately lives on the opt-in `.curtain--panel-enter`
-   class, NOT on `.curtain--panel`. Projects.jsx decides once, during the
-   first render, whether this mount is a genuine/direct landing visit, and the
-   class is then fixed for the life of the mount — so the entrance either
-   applies from the very first paint or never applies at all.
-
-   It must NOT go back to being a rule on `.curtain--panel` that something
-   else switches off. That was the previous shape (`animation: none` scoped
-   under `.dimension-stage--entering`) and it caused a replay: the wrapper
-   class is transient — DimensionStage swaps `--entering` for `--exiting` when
-   the next outward teleport reaches its cover phase — so the suppression
-   stopped matching mid-life, `animation-name` flipped none -> curtain-enter,
-   and the browser started a brand-new animation. Measured in Chrome: both
-   panels jumped from left=0/597 back out to left=-131/779 and slid inward
-   again, in the open, before the sweep had covered the screen. */
 .curtain--panel {
   --curtain-enter-x: 0;
   --curtain-enter-y: 0;
@@ -460,15 +319,14 @@
     transform: translate(0, 0);
   }
 }
-/* Stacked (below lg): settle vertically, away from the shared boundary. */
+
 .curtain--panel[data-edge='left'] {
   --curtain-enter-y: -14%;
 }
 .curtain--panel[data-edge='right'] {
   --curtain-enter-y: 14%;
 }
-/* A stagger small enough to read as one movement, not two. Scoped to the
-   entrance class so it cannot apply to a panel that is not entering. */
+
 .curtain--panel-enter[data-edge='right'] {
   animation-delay: 70ms;
 }
@@ -483,12 +341,6 @@
   }
 }
 
-/* ---------- Correction B: full-height environmental regions ----------
-   The landing curtains are a fixed, viewport-filling layer rather than a block
-   in the document flow, so the gradients run edge to edge with no top or
-   bottom boundary to read as a panel. The landing page has no scrolling
-   content, so nothing is lost by taking it out of flow; the Navbar's own
-   stacking context (z-50) keeps it above. */
 .projects-curtains {
   position: fixed;
   inset: 0;
@@ -503,40 +355,13 @@
   }
 }
 
-/* ---------- 18.12 Return curtain ----------
-   DEPARTURE (correction F): no arrow glyph and no label — the gradient region
-   itself is the affordance. It is still a real link with an accessible name.
-
-   Refinement pass, three separate problems fixed here:
-
-   1. FULL HEIGHT. The plane used to carry a vertical mask fading out its top
-      13% to keep clear of the Navbar. That is exactly the "does not cover the
-      vertical height properly" complaint, so the mask is gone: the edge now
-      runs the true full height. The Navbar has its own stacking context above
-      it (z-50 vs z-30) and is backdrop-blurred, so the faint overlap behind
-      the pill reads fine.
-
-   2. THINNER, WITHOUT A BAD TOUCH TARGET. Visible width and hit area are now
-      decoupled. The link stays --return-curtain-hit wide so it remains a
-      comfortable target on touch; only the gradient body is squeezed down to
-      --return-curtain-w. Shrinking the element itself would have made the
-      edge slim at the cost of a target too small to press.
-
-   3. NO BLOCK. The band fades out by alpha rather than by fading to the page
-      colour, and its mask is switched off, so band and glow read as one
-      continuous falloff instead of two stacked layers with a seam between
-      them. See the .curtain__body override below for why that seam existed. */
 .curtain--return {
   position: fixed;
   inset-block: 0;
   width: var(--return-curtain-hit);
   z-index: 30;
 }
-/* Both return curtains keep a faint idle glow, including the neutral Game one
-   that the tone rules would otherwise leave at zero. With the arrow gone
-   (correction F) the region has to read as interactive at rest, not only on
-   hover. Written with the attribute selector so it outranks the per-tone
-   default. */
+
 .curtain--return[data-tone] {
   --curtain-glow-idle: 0.42;
 }
@@ -547,23 +372,6 @@
   left: 0;
 }
 
-/* The visible gradient: a slim band pinned to the screen edge, much narrower
-   than the link around it. `inset: 0` on the base rule sets both left and
-   right, so the inner side has to be released explicitly for the width to
-   take effect.
-
-   The band fades out by ALPHA, not by fading to the page colour, and its mask
-   is switched off so the falloff is one curve instead of two.
-
-   This is what removes the faint tall rectangle. The shared stop list ends at
-   solid #080B12 — correct for the landing curtains, which are opaque
-   full-screen regions — but here the band sits ON TOP of the glow layer, so
-   its near-black tail was painting over the glow at partial mask alpha and
-   dimming it. That carved a dark groove between the bright edge and the glow
-   (measured: luminance dipped to 25 at x=20 then rose again to 29 at x=40),
-   and the eye reads that groove as the boundary of a stacked panel. Ending in
-   a fully transparent stop means the tail contributes nothing at all, so band
-   and glow become a single continuous falloff. */
 .curtain--return .curtain__body {
   width: var(--return-curtain-w);
   -webkit-mask-image: none;
@@ -577,9 +385,7 @@
   --curtain-stops: #6a99be 0%, #5b87a8 24%, rgba(63, 93, 118, 0.74) 50%, rgba(34, 49, 63, 0.34) 76%,
     rgba(8, 11, 18, 0) 100%;
 }
-/* The material sheen is a box-shaped wash that only makes sense on the large
-   landing regions. With the band's mask gone it would paint its own hard-edged
-   rectangle, and on a band this slim it adds nothing anyway. */
+
 .curtain--return .curtain__sheen {
   display: none;
 }
@@ -592,10 +398,6 @@
   left: 0;
 }
 
-/* The glow is a separate, unmasked layer extending far INWARD from the edge —
-   this is what keeps a slim band from reading as a pasted strip. Its radial
-   falloff is softer at the top and bottom than in the middle, so the edge
-   stays full-height without ever squaring off into a rectangle. */
 .curtain--return .curtain__glow {
   background: radial-gradient(42% 78% at var(--curtain-outer-x) 50%, var(--curtain-glow) 0%, transparent 76%);
 }
@@ -606,23 +408,10 @@
   inset: 0 -620% 0 0;
 }
 
-/* ---------- Category page content clearance ----------
-   Keeps the Game/AI page body clear of the fixed return curtain. Reads the
-   same --return-curtain-hit token the link's own width comes from (the hit
-   area, not the narrower visible band), so resizing either can never leave
-   the clearance stale.
-
-   From `lg` up the clearance is mirrored onto the free edge as well. The
-   approved page composition is a centred 1200px column, and a one-sided
-   inset would push that column visibly off-centre against the (centred)
-   Navbar. Below `lg` the free edge keeps its normal gutter instead —
-   mirroring there would squeeze the content column on narrow screens for no
-   visual gain, since only one edge actually carries a curtain. */
 .projects-page-body {
   --curtain-clearance: calc(var(--return-curtain-hit) + 1.5rem);
 }
-/* Narrow screens inset by the bare hit area: the page column's own gutter
-   already supplies the breathing room, and every pixel counts there. */
+
 .projects-page-body[data-curtain-edge='left'] {
   padding-left: var(--return-curtain-hit);
 }
@@ -636,66 +425,9 @@
   }
 }
 
-/* ---------- Correction G: teleport transition ----------
-   DEPARTURE from spec 18.8's perspective rotation, on owner instruction.
-
-   Second correction pass: the radial bloom is gone. It read as a single
-   flash-ball taking over the screen, which is explicitly not the intent. The
-   transition is now one continuous DIRECTIONAL SWEEP that crosses the whole
-   viewport, driven by a dense particle field travelling ahead of it.
-
-   Direction rule — the sweep always travels AWAY from the activated curtain,
-   across the screen, and comes to rest at the opposite edge, which is exactly
-   where that page's return curtain lives:
-     landing -> Game (curtain on the left)   sweeps RIGHT, leaves the right-edge return curtain
-     landing -> AI   (curtain on the right)  sweeps LEFT,  leaves the left-edge return curtain
-     Game    -> landing (curtain right)      sweeps LEFT
-     AI      -> landing (curtain left)       sweeps RIGHT
-
-   Only opacity and filter change on the page itself — deliberately, because
-   the landing curtains are position:fixed and a transform on any ancestor
-   would turn them into stage-relative boxes mid-transition.
-   Phase durations are owned by TeleportProvider.jsx. */
-/* OWNER CORRECTION (2026-09-07): this used to fade the departing page to
-   opacity 0 and flare it with `brightness(1.9) saturate(0.6)`, starting the
-   instant the `cover` phase began — running on its own 440ms timeline,
-   uncorrelated with how much of the screen the sweep had actually covered.
-   That is the "page fades/flashes before the cover reaches it" bug. It was
-   also fully redundant: the teleport overlay's sweep-fill core is already
-   opaque and provably covers the entire viewport by the moment `cover` ends
-   (see the 75%/150% geometry note on .teleport__sweep-fill below), which is
-   exactly when TeleportProvider swaps the route. So the overlay alone already
-   guaranteed nothing-visible-during-swap; this rule only added an early,
-   independent fade on top of that guarantee. The departing page now stays
-   visually frozen in its normal final state and lets the curtain overlay do
-   all the covering. Restore the transition/opacity/filter declarations below
-   to bring the old fade back. */
 .dimension-stage--exiting {
 }
-/* OWNER CORRECTION (2026-09-07, return-transition lifecycle fix): this used to
-   animate `filter` on `.dimension-stage--entering` itself — the ANCESTOR of
-   `.projects-curtains` (landing) and `.curtain--return` (Game/AI), both
-   position:fixed. Per spec, any element with a non-`none` `filter` becomes the
-   containing block for position:fixed/absolute descendants (same rule the
-   comment above already knew about for `transform`, just not for `filter`).
-   On the landing page the wrapper's only OTHER child is an `.sr-only` h1
-   (position:absolute, contributes 0 to layout height), so for as long as the
-   entrance filter was animating, the wrapper's own height was 0 — and
-   `.projects-curtains` (`inset: 0` relative to that 0-height box) collapsed
-   to 0 height and vanished with it. The teleport curtain finishes revealing
-   at ~440ms; dimension-resolve runs 560ms; the ~120ms in between showed a
-   collapsed, empty landing that then SNAPPED to full height the instant the
-   filter animation ended — read as "content appearing after the transition."
-   If the next click landed inside that same window, the class swap from
-   `--entering` to `--exiting` killed the animation early and produced the
-   same snap earlier instead — the "small unintended movement" on the next
-   outward trip. Same bug, two moments.
-   Fix: animate each direct child individually instead of the shared wrapper.
-   A filtered element never affects its OWN position — only its descendants'
-   — so `.projects-curtains` / `.curtain--return` can safely carry the filter
-   themselves without ever becoming an ancestor-containing-block problem for
-   each other or for anything else. Visual timing/easing is unchanged; only
-   which element(s) run the keyframes changed. */
+
 .dimension-stage--entering > * {
   animation: dimension-resolve 560ms cubic-bezier(0.1, 0.45, 0.4, 1) backwards;
 }
@@ -718,30 +450,6 @@
   overflow: hidden;
 }
 
-/* The sweep band. Three viewports wide, soft at BOTH ends and solid through
-   the middle, parked entirely off-screen on the activated curtain's side.
-   Cover translates it until its solid core spans the viewport; reveal keeps it
-   moving the same way until it has left. One band, one direction, no reversal
-   — so the energy visibly passes through the page rather than flashing on and
-   off in place.
-   The 75% / 150% stops are geometric, not taste: at 2x width with the core
-   band spanning 20%-80% of the fill, 75% is the first offset at which that
-   core fully covers the viewport, and 150% is exactly twice that, which puts
-   the whole band past the far edge.
-
-   The band also starts late (--teleport-sweep-delay) so the particle field
-   gets a clear head start across the dark page. Without it the two move
-   together and the particles simply vanish into the band.
-
-   EASING (refinement pass): cover and reveal are a matched pair, not two
-   independent curves. cubic-bezier(0.5,0,0.9,0.55) leaves the cover phase at
-   slope (1-0.55)/(1-0.9) = 4.5; cubic-bezier(0.1,0.45,0.4,1) enters the reveal
-   phase at slope 0.45/0.1 = 4.5. Equal exit and entry velocity, over equal
-   distance in equal time, so the band does not decelerate to a stop and
-   restart at the handoff — which is what made the transition read as two
-   abrupt halves. Cover still starts from rest (entry slope 0) and reveal
-   still settles to rest (exit slope 0), so the whole thing is one stroke:
-   ease in, carry through, ease out. */
 .teleport__sweep {
   position: absolute;
   inset: 0;
@@ -752,10 +460,7 @@
   top: 0;
   bottom: 0;
   width: 200%;
-  /* Ramps are deliberately tight. At 3x width with a 26% ramp the falloff
-     alone spanned nearly a full viewport, so the screen read as already
-     covered long before the sweep front actually arrived — the front had no
-     definition and the particle field was washed out behind it. */
+
   background-image: linear-gradient(
     90deg,
     transparent 0%,
@@ -822,11 +527,6 @@
   }
 }
 
-/* Teleport particles run ahead of the sweep band in the same direction, so the
-   screen is taken over by the field itself rather than by a flat wipe.
-   Glow comes from a radial-gradient fill, NOT a box-shadow: at this count a
-   per-element shadow blur pass is the expensive part, and the gradient costs
-   effectively nothing while reading the same. */
 .teleport-particle {
   position: absolute;
   border-radius: 999px;
@@ -860,20 +560,12 @@
   }
 }
 
-/* ---------- 18.15 Reduced motion ----------
-   globals.css already collapses every duration site-wide; these rules remove
-   the displacement and the intense flood themselves, so nothing snaps to a
-   tilted pose and no one is hit by a full-brightness wash. Navigation stays
-   fully functional — TeleportProvider shortens the phases and mounts no
-   particles, leaving a plain, quick dimming crossfade. */
 @media (prefers-reduced-motion: reduce) {
   .curtain[data-active] .curtain__plane,
   .curtain[data-charging] .curtain__plane {
     transform: none;
   }
-  /* No sliding entrance — the regions are simply in their final positions.
-     (globals.css already collapses the duration; this removes the animation
-     outright so no displaced first frame can be painted at all.) */
+
   .curtain--panel-enter {
     animation: none;
   }
@@ -886,12 +578,7 @@
   .dimension-stage--entering > * {
     animation: none;
   }
-  /* Section 10 asks that the DIRECTIONAL REVEAL survive reduced motion, so the
-     sweep is kept — just short, dimmer, and with almost no particle field.
-     globals.css forces every animation to ~0ms site-wide, which would erase
-     the reveal entirely, so the duration is restored here with !important
-     scoped to the sweep alone (these selectors outrank the global `*` rule).
-     Nothing else full-screen moves. */
+
   .teleport[data-phase='cover'] .teleport__sweep-fill,
   .teleport[data-phase='reveal'] .teleport__sweep-fill {
     animation-duration: 200ms !important;

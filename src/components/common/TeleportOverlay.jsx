@@ -1,35 +1,7 @@
-/**
- * The visible half of the teleport transition (owner correction pass, in place
- * of ANIMATION_SPEC.md 18.8's perspective rotation).
- *
- * Rendered once above the router outlet so a single element instance spans the
- * route change: the same sweep that starts on the departing page is still on
- * screen, mid-animation, when the destination mounts underneath it.
- *
- * Second correction pass: no bloom, no flash-ball. A dense field of luminous
- * particles surges out of the activated curtain and streams across the whole
- * viewport, with the sweep band travelling behind it in the same direction.
- * Cover fills the screen; reveal keeps going the same way and clears off the
- * far edge, uncovering the destination progressively — and the destination's
- * own return curtain already sits at that far edge, so what the sweep leaves
- * behind is exactly that thin gradient.
- *
- * PARTICLE COUNT lives here (PARTICLE_COUNT / REDUCED_PARTICLE_COUNT).
- * SWEEP DIRECTION comes from the curtain data (src/data/projectCurtains.js).
- * PHASE TIMING comes from TeleportProvider.jsx.
- * Nothing here is a measured design value.
- *
- * TEMPORARY A/B TOGGLE (owner request, 2026-09-07): set this to `true` to
- * restore the screen-filling particle field during the cover phase. Setting
- * it to `false` does NOT delete or rewrite the particle system below — it
- * only skips populating `particles`, so the sweep band, curtain gradients,
- * and phase timing are unaffected. Flip it back to re-enable.
- */
 const ENABLE_PROJECT_TRANSITION_PARTICLES = false
 const PARTICLE_COUNT = 260
 const REDUCED_PARTICLE_COUNT = 26
 
-/** Bright, but tone-separated: near-white for Game, blue-white for AI. */
 const TONES = {
   game: {
     core: '#f4f7fb',
@@ -49,26 +21,15 @@ function createField(tone, direction) {
 
   return Array.from({ length: PARTICLE_COUNT }, (_, i) => {
     const startY = Math.random() * 100
-    // A staggered start band rather than a single point: particles that begin
-    // further along the travel axis arrive earlier, which is what makes the
-    // field read as spreading and multiplying instead of marching as one wall.
     const lead = Math.random() ** 1.4
 
     return {
       key: `${tone}-${direction}-${i}`,
-      // Offsets are relative to the origin the CSS variable supplies, so the
-      // whole field re-anchors to whichever curtain was activated.
       offsetX: Number((sign * lead * 34 + (Math.random() * 16 - 8)).toFixed(2)),
       top: `${startY.toFixed(1)}%`,
-      // The visible core is ~26% of the box (the rest is glow falloff), so the
-      // box is much larger than the dot it draws.
       size: Number((5 + Math.random() * 13).toFixed(1)),
-      // Long enough to carry the field clear across the viewport.
       travelX: Number((sign * (58 + Math.random() * 76)).toFixed(1)),
-      // Fans away from the midline so the sweep spreads vertically as it goes.
       travelY: Number(((startY - 50) * (0.2 + Math.random() * 0.45)).toFixed(1)),
-      // delay + duration is capped at the cover phase length, so no particle
-      // is ever cut off mid-flight when the phase flips to reveal.
       duration: Math.round(280 + Math.random() * 220),
       delay: Math.round(Math.random() * 140),
       opacity: Number((0.65 + Math.random() * 0.35).toFixed(2)),
@@ -86,8 +47,6 @@ function getField(tone, direction) {
 }
 
 export default function TeleportOverlay({ teleport, isReduced, coverMs, revealMs, sweepDelayMs = 0 }) {
-  // The charge phase belongs to the curtain alone — the overlay stays out of
-  // the way until the surge actually begins.
   if (!teleport || teleport.phase === 'charge') return null
 
   const tone = TONES[teleport.tone] ?? TONES.game

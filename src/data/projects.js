@@ -5,45 +5,6 @@ import EOTR2 from '../assets/images/projects/ai/EOTRNet2.png'
 import Tom1 from '../assets/images/projects/game/Tom1.png'
 import Tom2 from '../assets/images/projects/game/Tom2.png'
 
-/**
- * THE project source of truth, shared by Home -> Featured Works, the AI
- * Projects page and the Game Projects page (ANIMATION_SPEC.md 16-17,
- * INTERACTION_SPEC.md 10, 12-15). A project appears in several places, so it
- * is described exactly once here — never re-typed per route.
- *
- * Title/description/key-features/tags/status text is transcribed directly
- * from the approved Figma references per CLAUDE.md Section 23 — not
- * fabricated, including their minor wording/punctuation quirks:
- *   - AgroSense / EOTRNet: docs/figma-reference/home/Home_FeaturedWorks.png
- *   - the four related AI projects: docs/figma-reference/projects/AiProjectsPage.png
- *   - TOM: supplied verbatim by the project owner
- * Where the Home and AI-page frames word the same field slightly
- * differently, the already-approved Home wording is kept (owner instruction:
- * preserve existing approved descriptions / Key Features).
- *
- * `githubUrl` / `liveUrl` are `null` wherever no real destination has been
- * supplied anywhere in the design or repo; INTERACTION_SPEC.md 7.3 forbids
- * guessing one. The cards render those buttons in a visually-faithful but
- * disabled state until they are filled in.
- *
- * `images` is ordered exactly as the dedicated category page stacks them —
- * the two screenshots already in the repo are the second view of their
- * project (AgroSense batch mode, EOTRNet tracking logs), so they sit in the
- * lower slot and the upper one is still awaiting its file. An entry whose
- * `src` is null keeps its container (and therefore the page layout) intact
- * and renders ImagePlaceholder until the file named by `requiredPath` is
- * added — see CLAUDE.md Section 11. Home shows the first entry that actually
- * has an image, so this ordering never leaves Home with a placeholder.
- *
- * Flags:
- *   `featured`   -> gets the large, detailed card on its own category page.
- *   `showOnHome` -> part of the curated Home "Selected Work" pair. Home's
- *                   set is an approved editorial choice from its own Figma
- *                   frame, not something derivable from category/featured,
- *                   so it is stated rather than inferred.
- *   `category`   -> which curtain destination ('game' | 'ai') the project
- *                   belongs to.
- */
 export const projects = [
   {
     id: 'agrosense',
@@ -95,9 +56,6 @@ export const projects = [
     ],
     status: 'Work In Progress',
     category: 'ai',
-    /* SQLite is present in the AI Projects frame's tag row (and confirmed by
-       the owner) but absent from the older Home frame; the union is the
-       project's actual stack, so it is kept here once for both. */
     tags: ['Python', 'YOLOv8n', 'ByteTrack', 'SQLite', 'FastAPI', 'Streamlit'],
     githubUrl: 'https://github.com/utinn/EOTRNet---Smart-Traffic-Security-and-Surveillance-System',
     liveUrl: null,
@@ -150,21 +108,6 @@ export const projects = [
     showOnHome: false,
   },
   {
-    id: 'indonesia-pothole-detector',
-    title: 'Indonesia Pothole Detector',
-    description:
-      'A smart image segmentation system designed to generate pixel-level masks for road potholes, with potential applications in automated road inspection and maintenance.',
-    keyFeatures: [],
-    images: [],
-    status: 'Work In Progress',
-    category: 'ai',
-    tags: ['Python', 'U-Net'],
-    githubUrl: null,
-    liveUrl: null,
-    featured: false,
-    showOnHome: false,
-  },
-  {
     id: 'tom',
     title: 'TOM',
     description:
@@ -194,22 +137,14 @@ export const projects = [
   },
 ]
 
-/** The curated Home -> Featured Works pair (see `showOnHome` above). */
 export const homeProjects = projects.filter((project) => project.showOnHome)
 
-/** Large detailed cards on a category page, in design order. */
 export const featuredProjectsIn = (category) =>
   projects.filter((project) => project.category === category && project.featured)
 
-/** "Other Related Projects" — the compact cards on a category page. */
 export const otherProjectsIn = (category) =>
   projects.filter((project) => project.category === category && !project.featured)
 
-/**
- * Status -> dot/glow color used by the radar-pulse indicator
- * (ANIMATION_SPEC.md 16.1). Colors are a provisional visual approximation
- * of the Figma reference — verify against Figma MCP later.
- */
 export const statusColors = {
   Completed: 'var(--color-status-completed)',
   'Work In Progress': 'var(--color-status-wip)',

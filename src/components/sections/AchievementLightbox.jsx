@@ -2,28 +2,6 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import ImagePlaceholder from '../common/ImagePlaceholder'
 
-/**
- * Click-to-enlarge lightbox for the active Achievements carousel image
- * (owner refinement pass, 2026-09-10). Not covered by ANIMATION_SPEC.md /
- * INTERACTION_SPEC.md — an explicit owner instruction takes priority over an
- * unwritten spec (CLAUDE.md Section 26), so this stays intentionally simple:
- * a centered enlargement with the same blue-glow card language as the
- * carousel, closable via backdrop click, the close button, or Escape.
- *
- * Portal fix (owner correction pass): `.ach-lightbox` is `position: fixed`,
- * but AchievementsCarousel.jsx renders this component as a child of
- * `.ach-carousel`, which carries its own entrance `transform` (animations.css
- * "22 Achievements Page carousel" — `transform: translateY(...)` on both the
- * base and `-revealed` states, never `transform: none`). Per the CSS spec,
- * any non-`none` ancestor `transform` establishes the containing block for a
- * `position: fixed` descendant, so the lightbox was being sized/positioned
- * against the carousel's own box instead of the viewport — the "still feels
- * constrained by the page/carousel context" bug. `createPortal` renders this
- * subtree as a real child of `document.body`, matching how
- * CertificateLightbox already achieves true viewport-fixed positioning
- * (Certificates.jsx never nests its lightbox under a transformed ancestor),
- * without touching any `.ach-lightbox*` CSS or the carousel's own structure.
- */
 export default function AchievementLightbox({ item, open, onClose }) {
   const closeButtonRef = useRef(null)
 
@@ -36,8 +14,6 @@ export default function AchievementLightbox({ item, open, onClose }) {
     document.addEventListener('keydown', handleKeyDown)
     closeButtonRef.current?.focus()
 
-    // Locks page scroll while the lightbox is open; restored to whatever the
-    // page had on close rather than assumed empty.
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 

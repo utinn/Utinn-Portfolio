@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import PageContainer from '../components/layout/PageContainer'
 
-/** Fallback for unmatched routes. */
 export default function NotFound() {
   return (
     <PageContainer>

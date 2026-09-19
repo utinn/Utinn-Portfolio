@@ -3,16 +3,6 @@ import Label from '../common/Label'
 import ProjectStatus from '../common/ProjectStatus'
 import ProjectCardSurface from './ProjectCardSurface'
 
-/**
- * Compact project card for "Other Related Projects". Same design language as
- * the featured card — same surface, status indicator, tag chips and shared
- * directional button — but simpler: no screenshots and no Key Features list,
- * matching docs/figma-reference/projects/AiProjectsPage.png.
- *
- * The button row is pushed to the bottom so cards in a row stay visually
- * balanced whatever length their title/description runs to, without any text
- * being clipped.
- */
 export default function ProjectSummaryCard({ project, revealDelayMs = 0 }) {
   return (
     <ProjectCardSurface revealDelayMs={revealDelayMs} variant="other" className="flex h-full flex-col">
